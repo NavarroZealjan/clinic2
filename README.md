@@ -1,5 +1,4 @@
-# Clinic RBAC — Next.js App Router + PostgreSQL + JWT (example)
-
+##
 This repo is a minimal example implementing role-based authentication/authorization
 for a clinic app (doctors, secretaries, admin). It uses Next.js App Router, PostgreSQL,
 JWT stored in an httpOnly cookie, and server-side protection for API routes.
