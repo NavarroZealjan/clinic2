@@ -1,12 +1,7 @@
-export const metadata = {
-  title: 'Clinic System',
-  description: 'Clinic Appointment Management System',
-};
-
-export default function RootLayout({ children }) {
+export default function LoginLayout({ children }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      {children}
+    </div>
   );
 }
