@@ -1,49 +1,47 @@
-'use client';
+import { Sidebar } from "@/components/sidebar"
+import { StatCard } from "@/components/stat-card"
+import { RecentActivity } from "@/components/recent-activity"
+import { Notifications } from "@/components/notifications"
+import { PatientWalkIn } from "@/components/patient-walk-in"
+import { DoctorsAvailable } from "@/components/doctors-available"
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from "@/contexts/auth";
-
-
-
-export default function LoginPage() {
-  const { login } = useAuth();
-  const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      login({ username: data.user.username, role: data.user.role });
-    } else {
-      alert(data.message);
-    }
-  };
-
+export default function DashboardPage() {
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        placeholder="Username"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-      />
-      <button type="submit">Login</button>
-    </form>
-  );
+    <div className="flex min-h-screen">
+      <Sidebar />
+
+      <main className="flex-1">
+        {/* Header */}
+        <header className="h-14 flex items-center px-8" style={{ backgroundColor: "var(--header-bg)" }}>
+          <h1 className="text-xl font-semibold text-white">Home</h1>
+        </header>
+
+        {/* Main Content */}
+        <div className="p-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatCard value="6" label="Total Patients Today" color="blue" />
+            <StatCard value="4" label="Appointment Approved" color="light-blue" />
+            <StatCard value="6" label="Appointment Pending" color="coral" />
+            <StatCard value="2" label="Doctors Available" color="green" />
+          </div>
+
+          {/* Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Activity and Notifications */}
+            <div className="lg:col-span-2 space-y-6">
+              <RecentActivity />
+              <Notifications />
+            </div>
+
+            {/* Right Column - Widgets */}
+            <div className="space-y-6">
+              <PatientWalkIn />
+              <DoctorsAvailable />
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
 }
