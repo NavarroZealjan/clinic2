@@ -1,10 +1,19 @@
 "use client"
 
-import { Home, Users, Calendar, FileText, BarChart3, CreditCard, ChevronDown } from "lucide-react"
+import { Home, Users, Calendar, FileText, BarChart3, CreditCard, ChevronDown, LogOut } from "lucide-react"
 import { useState } from "react"
 
 export function Sidebar() {
   const [isPatientsOpen, setIsPatientsOpen] = useState(false)
+
+  const handleLogout = () => {
+    // TODO: Connect to your auth context
+    // Example: const { logout } = useAuth()
+    // logout()
+
+    // For now, redirect to login page
+    window.location.href = "/login"
+  }
 
   return (
     <aside
@@ -77,6 +86,16 @@ export function Sidebar() {
           </button>
         </div>
       </nav>
+
+      <div className="px-4 py-4 border-t border-white/10">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="font-medium">Logout</span>
+        </button>
+      </div>
     </aside>
   )
 }

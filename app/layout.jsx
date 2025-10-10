@@ -1,19 +1,14 @@
-import "./globals.css";
-import { AuthProvider } from "../contexts/auth";
+import "./globals.css"
 
 export const metadata = {
-  title: "E-Clinic",
-  description: "Clinic management system",
-};
+  title: "E-Clinic Dashboard",
+  description: "Medical clinic management dashboard",
+}
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </body>
+      <body className="antialiased">{children}</body>
     </html>
-  );
+  )
 }
