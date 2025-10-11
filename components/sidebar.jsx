@@ -2,17 +2,14 @@
 
 import { Home, Users, Calendar, FileText, BarChart3, CreditCard, ChevronDown, LogOut } from "lucide-react"
 import { useState } from "react"
+import { useAuth } from "@/contexts/auth"
 
 export function Sidebar() {
   const [isPatientsOpen, setIsPatientsOpen] = useState(false)
+  const { logout } = useAuth()
 
   const handleLogout = () => {
-    // TODO: Connect to your auth context
-    // Example: const { logout } = useAuth()
-    // logout()
-
-    // For now, redirect to login page
-    window.location.href = "/login"
+    logout()
   }
 
   return (

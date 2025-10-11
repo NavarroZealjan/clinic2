@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { pool } from "../../../lib/db"; // ✅ Correct import for Postgres
 
 export async function POST(request) {
@@ -16,12 +15,13 @@ export async function POST(request) {
     }
 
     const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) {
+    // ✅ Compare plain text password (since DB passwords are not hashed)
+    if (password !== user.password) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }
 
+    // ✅ Login successful
     return NextResponse.json({
       message: "Login successful",
       user: { id: user.id, username: user.username, role: user.role },
