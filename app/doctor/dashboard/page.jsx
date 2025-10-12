@@ -1,9 +1,7 @@
 import { Sidebar } from "@/components/sidebar"
 import { StatCard } from "@/components/stat-card"
 import { RecentActivity } from "@/components/recent-activity"
-import { Notifications } from "@/components/notifications"
 import { DoctorsAvailable } from "@/components/doctors-available"
-import { PatientWalkIn } from "@/components/patient-walk-in"
 
 export default function DoctorDashboardPage() {
   return (
@@ -28,15 +26,11 @@ export default function DoctorDashboardPage() {
 
           {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Activity and Notifications */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2">
               <RecentActivity />
-              <Notifications />
             </div>
 
-            {/* Right Column - Widgets */}
-            <div className="space-y-6">
-              <PatientWalkIn />
+            <div>
               <DoctorsAvailable />
             </div>
           </div>

@@ -60,6 +60,7 @@ VALUES
   ('staff1', 'password123', 'staff', 'Staff Member'),
   ('zealjan@gmail.com', 'capstone2', 'admin', 'Zealjan Admin'),
   ('datan@gmail.com', 'capstone2', 'staff', 'Datan Staff')
+,
 ON CONFLICT
 (username) DO NOTHING;
 

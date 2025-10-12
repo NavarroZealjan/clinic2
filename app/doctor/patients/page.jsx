@@ -29,12 +29,22 @@ export default function PatientManagementPage() {
       })
 
       const response = await fetch(`/api/patients?${params}`)
+
+      if (!response.ok) {
+        console.error("[v0] API error:", response.status)
+        setPatients([])
+        setTotal(0)
+        return
+      }
+
       const data = await response.json()
 
-      setPatients(data.patients)
-      setTotal(data.total)
+      setPatients(data.patients || [])
+      setTotal(data.total || 0)
     } catch (error) {
       console.error("[v0] Error fetching patients:", error)
+      setPatients([])
+      setTotal(0)
     } finally {
       setLoading(false)
     }

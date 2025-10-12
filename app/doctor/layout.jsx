@@ -10,7 +10,7 @@ export default function DoctorLayout({ children }) {
 
   useEffect(() => {
     const checkAuth = () => {
-      try {
+      try { 
         const userStr = localStorage.getItem("user")
         console.log("[v0] Doctor layout - checking auth, user from localStorage:", userStr)
 
