@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
-export function PatientFormModal({ open, onOpenChange }) {
+export function PatientEditModal({ patient, open, onOpenChange, onSuccess }) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -20,6 +20,22 @@ export function PatientFormModal({ open, onOpenChange }) {
     emergencyContactNumber: "",
   })
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (patient) {
+      setFormData({
+        fullName: patient.full_name || "",
+        email: patient.email || "",
+        address: patient.address || "",
+        dateOfBirth: patient.date_of_birth ? patient.date_of_birth.split("T")[0] : "",
+        bloodType: patient.blood_type || "",
+        contactNumber: patient.contact_number || "",
+        gender: patient.gender || "male",
+        emergencyContactName: patient.emergency_contact_name || "",
+        emergencyContactNumber: patient.emergency_contact_number || "",
+      })
+    }
+  }, [patient])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -35,33 +51,21 @@ export function PatientFormModal({ open, onOpenChange }) {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/patients", {
-        method: "POST",
+      const response = await fetch(`/api/patients/${patient.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
 
       if (response.ok) {
-        alert("Patient information submitted successfully!")
-        // Reset form and close modal
-        setFormData({
-          fullName: "",
-          email: "",
-          address: "",
-          dateOfBirth: "",
-          bloodType: "",
-          contactNumber: "",
-          gender: "male",
-          emergencyContactName: "",
-          emergencyContactNumber: "",
-        })
-        onOpenChange(false)
+        alert("Patient updated successfully!")
+        onSuccess()
       } else {
-        alert("Failed to submit patient information")
+        alert("Failed to update patient")
       }
     } catch (error) {
-      console.error("[v0] Error submitting patient:", error)
-      alert("Error submitting patient information")
+      console.error("[v0] Error updating patient:", error)
+      alert("Error updating patient")
     } finally {
       setLoading(false)
     }
@@ -70,29 +74,11 @@ export function PatientFormModal({ open, onOpenChange }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "var(--stat-blue)" }}
-            >
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                />
-              </svg>
-            </div>
-            <DialogTitle className="text-2xl font-bold">E-CLINIC</DialogTitle>
-          </div>
-          <p className="text-sm text-gray-600">
-            Patient details are required for your medical record. Please fill in all the details below.
-          </p>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">Edit Patient Information</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Personal Information */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
@@ -150,27 +136,15 @@ export function PatientFormModal({ open, onOpenChange }) {
               <div className="space-y-2 md:col-span-2">
                 <Label>Gender</Label>
                 <RadioGroup value={formData.gender} onValueChange={handleGenderChange} className="flex gap-4">
-                  <div
-                    className="flex items-center space-x-2 border rounded-lg px-4 py-3 cursor-pointer"
-                    style={{
-                      borderColor: formData.gender === "male" ? "var(--stat-green)" : "#e5e7eb",
-                      backgroundColor: formData.gender === "male" ? "rgba(74, 222, 128, 0.1)" : "transparent",
-                    }}
-                  >
-                    <RadioGroupItem value="male" id="male" />
-                    <Label htmlFor="male" className="cursor-pointer font-medium">
+                  <div className="flex items-center space-x-2 border rounded-lg px-4 py-3 cursor-pointer">
+                    <RadioGroupItem value="male" id="edit-male" />
+                    <Label htmlFor="edit-male" className="cursor-pointer font-medium">
                       MALE
                     </Label>
                   </div>
-                  <div
-                    className="flex items-center space-x-2 border rounded-lg px-4 py-3 cursor-pointer"
-                    style={{
-                      borderColor: formData.gender === "female" ? "var(--stat-green)" : "#e5e7eb",
-                      backgroundColor: formData.gender === "female" ? "rgba(74, 222, 128, 0.1)" : "transparent",
-                    }}
-                  >
-                    <RadioGroupItem value="female" id="female" />
-                    <Label htmlFor="female" className="cursor-pointer font-medium">
+                  <div className="flex items-center space-x-2 border rounded-lg px-4 py-3 cursor-pointer">
+                    <RadioGroupItem value="female" id="edit-female" />
+                    <Label htmlFor="edit-female" className="cursor-pointer font-medium">
                       FEMALE
                     </Label>
                   </div>
@@ -207,14 +181,12 @@ export function PatientFormModal({ open, onOpenChange }) {
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-4">
-            <Button
-              type="submit"
-              className="px-12 py-6 text-white font-medium text-base"
-              style={{ backgroundColor: "var(--stat-green)" }}
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit and continue"}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button type="submit" className="bg-sky-500 hover:bg-sky-600 text-white" disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>

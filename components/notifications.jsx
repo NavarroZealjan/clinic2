@@ -1,6 +1,6 @@
-import { Calendar, Users, User } from "lucide-react"
+import { Calendar, Users, User, UserPlus } from "lucide-react"
 
-const notifications = [
+const defaultNotifications = [
   {
     id: 1,
     icon: Calendar,
@@ -24,7 +24,16 @@ const notifications = [
   },
 ]
 
-export function Notifications() {
+export function Notifications({ walkinNotifications = [] }) {
+  const allNotifications = [
+    ...walkinNotifications.map((notif) => ({
+      ...notif,
+      icon: UserPlus,
+      color: "purple",
+    })),
+    ...defaultNotifications,
+  ]
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200">
@@ -32,7 +41,7 @@ export function Notifications() {
       </div>
 
       <div className="divide-y divide-gray-100">
-        {notifications.map((notification) => {
+        {allNotifications.map((notification) => {
           const Icon = notification.icon
           return (
             <div
@@ -48,7 +57,9 @@ export function Notifications() {
                         ? "var(--notification-red)"
                         : notification.color === "green"
                           ? "var(--activity-green)"
-                          : "var(--activity-blue)",
+                          : notification.color === "purple"
+                            ? "#9333ea"
+                            : "var(--activity-blue)",
                   }}
                 >
                   <Icon className="w-5 h-5 text-white" />

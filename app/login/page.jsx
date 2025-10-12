@@ -10,17 +10,40 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const { login } = useAuth()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError("")
+
+    console.log("[v0] Starting login process...")
 
     try {
-      await login(email, password)
+      const result = await login(email.trim(), password.trim())
+      console.log("[v0] Login result:", result)
+
+      if (result && result.success && result.user) {
+        const redirectUrl =
+          result.user.role === "doctor"
+            ? "/doctor/dashboard"
+            : result.user.role === "admin"
+              ? "/admin/dashboard"
+              : "/staff/dashboard"
+
+        console.log("[v0] Redirecting to:", redirectUrl)
+        console.log("[v0] User stored in localStorage:", localStorage.getItem("user"))
+
+        window.location.replace(redirectUrl)
+      } else {
+        console.log("[v0] Login failed, result:", result)
+        setError("Login failed. Please check your credentials.")
+        setLoading(false)
+      }
     } catch (error) {
-      console.error("Login error:", error)
-    } finally {
+      console.error("[v0] Login error:", error)
+      setError("An error occurred. Please try again.")
       setLoading(false)
     }
   }
@@ -44,6 +67,10 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold text-gray-900">MedCare Portal</h1>
             <p className="text-gray-600 mt-2">Sign in to access your medical dashboard</p>
           </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">

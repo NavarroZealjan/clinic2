@@ -1,10 +1,9 @@
-"use client"
-
 import { Sidebar } from "@/components/sidebar"
 import { StatCard } from "@/components/stat-card"
 import { RecentActivity } from "@/components/recent-activity"
 import { Notifications } from "@/components/notifications"
 import { DoctorsAvailable } from "@/components/doctors-available"
+import { PatientWalkIn } from "@/components/patient-walk-in"
 
 export default function DoctorDashboardPage() {
   return (
@@ -37,6 +36,7 @@ export default function DoctorDashboardPage() {
 
             {/* Right Column - Widgets */}
             <div className="space-y-6">
+              <PatientWalkIn />
               <DoctorsAvailable />
             </div>
           </div>

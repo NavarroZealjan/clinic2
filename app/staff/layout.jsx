@@ -6,24 +6,41 @@ import { useEffect } from "react"
 
 export default function StaffLayout({ children }) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
-    // Redirect to login if not authenticated
+    if (loading) return
+
     if (!user) {
       router.push("/login")
       return
     }
 
-    // Check if user has staff role
     if (user.role !== "staff") {
       router.push("/login")
     }
-  }, [user, router])
+  }, [user, loading, router])
 
-  // Don't render until auth is checked
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!user || user.role !== "staff") {
-    return null
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    )
   }
 
   return <>{children}</>

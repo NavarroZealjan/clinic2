@@ -3,10 +3,12 @@
 import { Home, Users, Calendar, FileText, BarChart3, CreditCard, ChevronDown, LogOut } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/auth"
+import { useRouter } from "next/navigation"
 
 export function Sidebar() {
   const [isPatientsOpen, setIsPatientsOpen] = useState(false)
   const { logout } = useAuth()
+  const router = useRouter()
 
   const handleLogout = () => {
     logout()
@@ -49,7 +51,10 @@ export function Sidebar() {
 
             {isPatientsOpen && (
               <div className="ml-11 mt-1 space-y-1">
-                <button className="w-full text-left px-3 py-2 text-sm text-white/70 hover:text-white transition-colors">
+                <button
+                  onClick={() => router.push("/doctor/patients")}
+                  className="w-full text-left px-3 py-2 text-sm text-white/70 hover:text-white transition-colors"
+                >
                   Patient Management
                 </button>
                 <button className="w-full text-left px-3 py-2 text-sm text-white/70 hover:text-white transition-colors">
