@@ -1,35 +1,49 @@
 import { NextResponse } from "next/server";
+import { query } from "@/lib/db";
 
-const MOCK_PATIENTS = [
-  {
-    id: 1,
-    full_name: "Angelo Cabras",
-    email: "act.acabras@gmail.com",
-    phone: "09152374381",
-    address: "Cebu City",
-    date_of_birth: "2003-10-30",
-    gender: "Male",
-    blood_type: "B+",
-    emergency_contact_name: "Ging Cabras",
-    emergency_contact_number: "09152374381",
-    created_at: "2025-08-07T12:31:00Z",
-    updated_at: "2025-08-07T12:31:00Z",
-  },
-];
-
-// GET single patient
+// GET single patient with medical records
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const patientId = Number.parseInt(id);
 
-    const patient = MOCK_PATIENTS.find((p) => p.id === patientId);
+    const patientResult = await query(`SELECT * FROM patients WHERE id = $1`, [
+      patientId,
+    ]);
 
-    if (!patient) {
+    if (patientResult.rows.length === 0) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    return NextResponse.json(patient);
+    const patient = patientResult.rows[0];
+
+    const medicalHistoryResult = await query(
+      `SELECT * FROM medical_history 
+       WHERE patient_id = $1
+       ORDER BY date DESC`,
+      [patientId]
+    );
+
+    const labResultsResult = await query(
+      `SELECT * FROM lab_results 
+       WHERE patient_id = $1
+       ORDER BY date DESC`,
+      [patientId]
+    );
+
+    const notesResult = await query(
+      `SELECT * FROM notes 
+       WHERE patient_id = $1
+       ORDER BY created_at DESC`,
+      [patientId]
+    );
+
+    return NextResponse.json({
+      ...patient,
+      medical_history: medicalHistoryResult.rows,
+      lab_results: labResultsResult.rows,
+      notes: notesResult.rows,
+    });
   } catch (error) {
     console.error("[v0] Error fetching patient:", error);
     return NextResponse.json(
@@ -42,23 +56,43 @@ export async function GET(request, { params }) {
 // PUT - Update patient
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const patientId = Number.parseInt(id);
     const data = await request.json();
 
-    const patientIndex = MOCK_PATIENTS.findIndex((p) => p.id === patientId);
+    const result = await query(
+      `UPDATE patients SET
+        full_name = $1,
+        email = $2,
+        address = $3,
+        date_of_birth = $4,
+        blood_type = $5,
+        contact_number = $6,
+        gender = $7,
+        emergency_contact_name = $8,
+        emergency_contact_number = $9,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $10
+      RETURNING *`,
+      [
+        data.fullName,
+        data.email,
+        data.address,
+        data.dateOfBirth,
+        data.bloodType,
+        data.contactNumber,
+        data.gender,
+        data.emergencyContactName,
+        data.emergencyContactNumber,
+        patientId,
+      ]
+    );
 
-    if (patientIndex === -1) {
+    if (result.rows.length === 0) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    MOCK_PATIENTS[patientIndex] = {
-      ...MOCK_PATIENTS[patientIndex],
-      ...data,
-      updated_at: new Date().toISOString(),
-    };
-
-    return NextResponse.json(MOCK_PATIENTS[patientIndex]);
+    return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error("[v0] Error updating patient:", error);
     return NextResponse.json(
@@ -71,16 +105,17 @@ export async function PUT(request, { params }) {
 // DELETE patient
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const patientId = Number.parseInt(id);
 
-    const patientIndex = MOCK_PATIENTS.findIndex((p) => p.id === patientId);
+    const result = await query(
+      `DELETE FROM patients WHERE id = $1 RETURNING id`,
+      [patientId]
+    );
 
-    if (patientIndex === -1) {
+    if (result.rows.length === 0) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
-
-    MOCK_PATIENTS.splice(patientIndex, 1);
 
     return NextResponse.json({ message: "Patient deleted successfully" });
   } catch (error) {

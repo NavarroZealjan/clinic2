@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const MOCK_PATIENTS = [];
+import { query } from "@/lib/db";
 
 // GET all patients with search and pagination
 export async function GET(request) {
@@ -11,21 +10,42 @@ export async function GET(request) {
     const limit = Number.parseInt(searchParams.get("limit") || "10");
     const offset = (page - 1) * limit;
 
-    let filteredPatients = MOCK_PATIENTS;
+    let result;
+    let totalResult;
+
     if (search) {
-      const searchLower = search.toLowerCase();
-      filteredPatients = MOCK_PATIENTS.filter(
-        (p) =>
-          p.full_name.toLowerCase().includes(searchLower) ||
-          p.contact_number.includes(search)
+      // Search by name or contact number
+      result = await query(
+        `SELECT * FROM patients 
+         WHERE full_name ILIKE $1 OR contact_number LIKE $2
+         ORDER BY created_at DESC
+         LIMIT $3 OFFSET $4`,
+        [`%${search}%`, `%${search}%`, limit, offset]
       );
+
+      totalResult = await query(
+        `SELECT COUNT(*) as count FROM patients 
+         WHERE full_name ILIKE $1 OR contact_number LIKE $2`,
+        [`%${search}%`, `%${search}%`]
+      );
+    } else {
+      // Get all patients
+      result = await query(
+        `SELECT * FROM patients 
+         ORDER BY created_at DESC
+         LIMIT $1 OFFSET $2`,
+        [limit, offset]
+      );
+
+      totalResult = await query(`SELECT COUNT(*) as count FROM patients`);
     }
 
-    const paginatedPatients = filteredPatients.slice(offset, offset + limit);
+    const patients = result.rows;
+    const total = Number.parseInt(totalResult.rows[0].count);
 
     return NextResponse.json({
-      patients: paginatedPatients,
-      total: filteredPatients.length,
+      patients,
+      total,
       page,
       limit,
     });
@@ -41,30 +61,42 @@ export async function GET(request) {
 // POST - Create new patient
 export async function POST(request) {
   try {
+    console.log("[v0] POST /api/patients - Starting patient creation");
+
     const data = await request.json();
+    console.log("[v0] Received patient data:", data);
 
-    const newPatient = {
-      id: MOCK_PATIENTS.length + 1,
-      full_name: data.fullName,
-      email: data.email,
-      address: data.address,
-      date_of_birth: data.dateOfBirth,
-      blood_type: data.bloodType,
-      contact_number: data.contactNumber,
-      gender: data.gender,
-      emergency_contact_name: data.emergencyContactName,
-      emergency_contact_number: data.emergencyContactNumber,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
+    console.log("[v0] Attempting database insert...");
+    const result = await query(
+      `INSERT INTO patients (
+        full_name, email, address, dob, blood_type, 
+        contact_number, gender, emergency_contact_name, emergency_contact_number
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *`,
+      [
+        data.fullName,
+        data.email,
+        data.address,
+        data.dob,
+        data.bloodType,
+        data.contactNumber,
+        data.gender,
+        data.emergencyContactName,
+        data.emergencyContactNumber,
+      ]
+    );
 
-    MOCK_PATIENTS.push(newPatient);
-
-    return NextResponse.json({ patient: newPatient }, { status: 201 });
+    console.log("[v0] Patient created successfully:", result.rows[0]);
+    return NextResponse.json({ patient: result.rows[0] }, { status: 201 });
   } catch (error) {
     console.error("[v0] Error creating patient:", error);
+    console.error("[v0] Error message:", error.message);
+    console.error("[v0] Error stack:", error.stack);
     return NextResponse.json(
-      { error: "Failed to create patient" },
+      {
+        error: "Failed to create patient",
+        details: error.message,
+      },
       { status: 500 }
     );
   }
