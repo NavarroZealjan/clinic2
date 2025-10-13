@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { PatientViewModal } from "@/components/patient-view-modal"
-import { PatientEditModal } from "@/components/patient-edit-modal"
-import { Pencil, Eye, Trash2 } from "lucide-react"
+import { Eye, Trash2 } from "lucide-react"
 
 export default function PatientManagementPage() {
   const [patients, setPatients] = useState([])
@@ -15,9 +14,7 @@ export default function PatientManagementPage() {
   const [limit, setLimit] = useState(10)
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
-  const [selectedPatient, setSelectedPatient] = useState(null)
-  const [viewModalOpen, setViewModalOpen] = useState(false)
-  const [editModalOpen, setEditModalOpen] = useState(false)
+  const router = useRouter()
 
   const fetchPatients = async () => {
     setLoading(true)
@@ -55,13 +52,7 @@ export default function PatientManagementPage() {
   }, [page, limit, search])
 
   const handleView = (patient) => {
-    setSelectedPatient(patient)
-    setViewModalOpen(true)
-  }
-
-  const handleEdit = (patient) => {
-    setSelectedPatient(patient)
-    setEditModalOpen(true)
+    router.push(`/doctor/patients/${patient.id}`)
   }
 
   const handleDelete = async (patientId) => {
@@ -200,7 +191,11 @@ export default function PatientManagementPage() {
                     </tr>
                   ) : (
                     patients.map((patient, index) => (
-                      <tr key={patient.id} className="hover:bg-gray-50">
+                      <tr
+                        key={patient.id}
+                        onClick={() => handleView(patient)}
+                        className="hover:bg-gray-50 cursor-pointer"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {(page - 1) * limit + index + 1}
                         </td>
@@ -221,14 +216,7 @@ export default function PatientManagementPage() {
                           {new Date(patient.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleEdit(patient)}
-                              className="bg-green-500 hover:bg-green-600 text-white"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <Button
                               size="sm"
                               onClick={() => handleView(patient)}
@@ -282,22 +270,6 @@ export default function PatientManagementPage() {
           </div>
         </div>
       </main>
-
-      {/* Modals */}
-      {selectedPatient && (
-        <>
-          <PatientViewModal patient={selectedPatient} open={viewModalOpen} onOpenChange={setViewModalOpen} />
-          <PatientEditModal
-            patient={selectedPatient}
-            open={editModalOpen}
-            onOpenChange={setEditModalOpen}
-            onSuccess={() => {
-              fetchPatients()
-              setEditModalOpen(false)
-            }}
-          />
-        </>
-      )}
     </div>
   )
 }
