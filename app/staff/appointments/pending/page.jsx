@@ -1,14 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Check, X, Eye } from "lucide-react"
+import { Check, X, Eye, ArrowLeft } from "lucide-react"
 
 export default function AppointmentsPendingPage() {
+  const router = useRouter()
   const [appointments, setAppointments] = useState([])
   const [filteredAppointments, setFilteredAppointments] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -72,7 +74,18 @@ export default function AppointmentsPendingPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="bg-cyan-500 text-white px-6 py-4">
-        <div className="text-sm">Home &gt; Appointment Pending</div>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push("/staff/dashboard")}
+            className="text-white hover:bg-cyan-600 hover:text-white h-8 px-2"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back
+          </Button>
+          <div className="text-sm">Home &gt; Appointment Pending</div>
+        </div>
       </div>
 
       <div className="p-6">

@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/auth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+import StaffSidebar from "@/components/staff-sidebar"
 
 export default function StaffLayout({ children }) {
   const router = useRouter()
@@ -43,5 +44,10 @@ export default function StaffLayout({ children }) {
     )
   }
 
-  return <>{children}</>
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      <StaffSidebar />
+      <div className="flex-1">{children}</div>
+    </div>
+  )
 }
