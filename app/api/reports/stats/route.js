@@ -7,12 +7,12 @@ export async function GET() {
     const store = getAppointmentsStore();
     const appointments = store.appointments;
 
-    const billingRecords = billingStore.getAll();
+    const billingRecords = await billingStore.getAll();
     const completedPayments = billingRecords.filter(
       (record) => record.status === "completed"
     );
     const totalRevenue = completedPayments.reduce(
-      (sum, record) => sum + record.amount,
+      (sum, record) => sum + Number.parseFloat(record.amount || 0),
       0
     );
 
@@ -83,6 +83,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
+    console.error("[v0] Error fetching reports:", error);
     return NextResponse.json(
       { error: "Failed to fetch reports" },
       { status: 500 }
