@@ -2,14 +2,20 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Home, Calendar, FileText, BarChart3, CreditCard, ChevronDown, ChevronRight } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { Home, Calendar, FileText, BarChart3, CreditCard, ChevronDown, ChevronRight, LogOut } from "lucide-react"
 
 export default function StaffSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [appointmentOpen, setAppointmentOpen] = useState(false)
 
   const isActive = (path) => pathname === path
+
+  const handleLogout = () => {
+    localStorage.removeItem("user")
+    router.push("/login")
+  }
 
   return (
     <div className="w-64 bg-[#1a2942] min-h-screen text-white flex flex-col">
@@ -76,7 +82,11 @@ export default function StaffSidebar() {
 
         <Link
           href="/staff/consultation-history"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg mb-1 text-gray-300 hover:bg-[#2a3952] hover:text-white transition-colors"
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors ${
+            isActive("/staff/consultation-history")
+              ? "bg-[#2a3952] text-white"
+              : "text-gray-300 hover:bg-[#2a3952] hover:text-white"
+          }`}
         >
           <FileText className="w-5 h-5" />
           <span>Consultation History</span>
@@ -84,7 +94,9 @@ export default function StaffSidebar() {
 
         <Link
           href="/staff/reports"
-          className="flex items-center gap-3 px-4 py-3 rounded-lg mb-1 text-gray-300 hover:bg-[#2a3952] hover:text-white transition-colors"
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors ${
+            isActive("/staff/reports") ? "bg-[#2a3952] text-white" : "text-gray-300 hover:bg-[#2a3952] hover:text-white"
+          }`}
         >
           <BarChart3 className="w-5 h-5" />
           <span>Reports</span>
@@ -98,6 +110,16 @@ export default function StaffSidebar() {
           <span>Billing</span>
         </Link>
       </nav>
+
+      <div className="p-4 border-t border-[#2a3952]">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-gray-300 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          <span>Logout</span>
+        </button>
+      </div>
     </div>
   )
 }
