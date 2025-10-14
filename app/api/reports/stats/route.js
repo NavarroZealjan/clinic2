@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { getAppointmentsStore } from "@/lib/appointments-store";
+import { billingStore } from "@/lib/billing-store";
 
 export async function GET() {
   try {
     const store = getAppointmentsStore();
     const appointments = store.appointments;
 
-    // Calculate monthly revenue (mock calculation)
-    const totalRevenue = appointments.length * 1000;
+    const billingRecords = billingStore.getAll();
+    const completedPayments = billingRecords.filter(
+      (record) => record.status === "completed"
+    );
+    const totalRevenue = completedPayments.reduce(
+      (sum, record) => sum + record.amount,
+      0
+    );
 
     // Calculate patient satisfaction (mock - would come from surveys)
     const patientSatisfaction = 75;
