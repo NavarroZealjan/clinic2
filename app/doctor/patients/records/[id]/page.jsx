@@ -4,17 +4,17 @@ import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, Calendar, Clock, User, Phone, Mail, MapPin, Droplet, Users } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, User, Phone, Mail, MapPin, Droplet, Users, FileText, TestTube } from "lucide-react"
 
-export default function StaffPatientDetailPage({ params }) {
+export default function DoctorPatientRecordDetailPage({ params }) {
   const { id } = use(params)
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("information")
   const [patient, setPatient] = useState(null)
   const [appointments, setAppointments] = useState([])
+  const [medicalHistories, setMedicalHistories] = useState([])
+  const [labResults, setLabResults] = useState([])
   const [loading, setLoading] = useState(true)
-
-  let patientData
 
   useEffect(() => {
     fetchPatientData()
@@ -24,7 +24,7 @@ export default function StaffPatientDetailPage({ params }) {
     try {
       const patientResponse = await fetch(`/api/patients/${id}`)
       if (patientResponse.ok) {
-        patientData = await patientResponse.json()
+        const patientData = await patientResponse.json()
         const transformedPatient = {
           id: patientData.id,
           fullName: patientData.full_name,
@@ -40,13 +40,25 @@ export default function StaffPatientDetailPage({ params }) {
           dateCreated: new Date(patientData.created_at).toLocaleString(),
         }
         setPatient(transformedPatient)
-      }
 
-      const appointmentsResponse = await fetch("/api/appointments")
-      if (appointmentsResponse.ok) {
-        const allAppointments = await appointmentsResponse.json()
-        const patientAppointments = allAppointments.filter((apt) => apt.contactNumber === patientData.phone)
-        setAppointments(patientAppointments)
+        const appointmentsResponse = await fetch("/api/appointments")
+        if (appointmentsResponse.ok) {
+          const allAppointments = await appointmentsResponse.json()
+          const patientAppointments = allAppointments.filter((apt) => apt.contactNumber === patientData.phone)
+          setAppointments(patientAppointments)
+        }
+
+        const medicalResponse = await fetch(`/api/patients/${id}/medical-history`)
+        if (medicalResponse.ok) {
+          const medicalData = await medicalResponse.json()
+          setMedicalHistories(medicalData)
+        }
+
+        const labResponse = await fetch(`/api/patients/${id}/lab-results`)
+        if (labResponse.ok) {
+          const labData = await labResponse.json()
+          setLabResults(labData)
+        }
       }
     } catch (error) {
       console.error("[v0] Error fetching patient data:", error)
@@ -115,7 +127,7 @@ export default function StaffPatientDetailPage({ params }) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push("/staff/patients")}
+              onClick={() => router.push("/doctor/patients/records")}
               className="text-white hover:bg-white/20 -ml-2"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
@@ -127,7 +139,7 @@ export default function StaffPatientDetailPage({ params }) {
       </div>
 
       <div className="p-6 max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Patient Information</h1>
+        <h1 className="text-2xl font-bold mb-6">Patient Record Details</h1>
 
         <div className="flex gap-2 mb-6">
           <Button
@@ -144,8 +156,16 @@ export default function StaffPatientDetailPage({ params }) {
           >
             Appointment History
           </Button>
+          <Button
+            variant={activeTab === "medical" ? "default" : "outline"}
+            onClick={() => setActiveTab("medical")}
+            className={activeTab === "medical" ? "bg-sky-500 hover:bg-sky-600" : ""}
+          >
+            Medical History & Lab Results
+          </Button>
         </div>
 
+        {/* Patient Information Tab */}
         {activeTab === "information" && (
           <Card className="p-6">
             <div className="flex items-start gap-6 mb-6">
@@ -234,6 +254,7 @@ export default function StaffPatientDetailPage({ params }) {
           </Card>
         )}
 
+        {/* Appointment History Tab */}
         {activeTab === "appointments" && (
           <Card className="p-6">
             <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
@@ -292,6 +313,79 @@ export default function StaffPatientDetailPage({ params }) {
               </div>
             )}
           </Card>
+        )}
+
+        {/* Medical History & Lab Results Tab - VIEW ONLY */}
+        {activeTab === "medical" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="p-6 border-2">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-lg">Medical History</h3>
+                  <p className="text-sm text-gray-500">({medicalHistories.length} entries)</p>
+                </div>
+              </div>
+
+              {medicalHistories.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <FileText className="w-16 h-16 mb-3" />
+                  <p className="font-medium">No Medical History</p>
+                  <p className="text-sm mt-2">No medical records available for this patient</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {medicalHistories.map((history) => (
+                    <Card key={history.id} className="p-4 bg-gray-50">
+                      <div className="mb-2">
+                        <p className="text-sm font-medium">{history.date}</p>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        <p className="font-medium mb-1">Diagnosis:</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {history.diagnosis
+                            .split("\n")
+                            .filter((line) => line.trim())
+                            .map((item, index) => (
+                              <li key={index}>{item.trim()}</li>
+                            ))}
+                        </ul>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">Added: {history.createdAt}</p>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-6 border-2">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-semibold text-lg">Lab Results</h3>
+                  <p className="text-sm text-gray-500">({labResults.length} entries)</p>
+                </div>
+              </div>
+
+              {labResults.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <TestTube className="w-16 h-16 mb-3" />
+                  <p className="font-medium">No Lab Results</p>
+                  <p className="text-sm mt-2">No lab results available for this patient</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {labResults.map((result) => (
+                    <Card key={result.id} className="p-4 bg-gray-50">
+                      <div className="mb-2">
+                        <p className="text-sm font-medium">{result.date}</p>
+                      </div>
+                      <p className="text-sm text-gray-700">File: {result.fileName}</p>
+                      <p className="text-xs text-gray-500 mt-2">Added: {result.createdAt}</p>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
         )}
       </div>
     </div>
