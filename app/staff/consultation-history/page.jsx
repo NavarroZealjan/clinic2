@@ -1,5 +1,5 @@
 "use client"
-import { ArrowLeft, Calendar, User } from "lucide-react"
+import { ArrowLeft, Calendar, User, Cake } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
@@ -61,25 +61,37 @@ export default function ConsultationHistoryPage() {
             <Card key={consultation.id} className="p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-gray-600" />
-                  <div>
-                    <div className="font-semibold text-lg">
-                      {new Date(consultation.date).toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-gray-600" />
+                    <div>
+                      <div className="font-semibold text-lg">
+                        {new Date(consultation.date).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </div>
+                      <div className="text-sm text-gray-600">{consultation.time}</div>
                     </div>
-                    <div className="text-sm text-gray-600">{consultation.time}</div>
+                    <Badge variant="secondary" className="ml-2">
+                      {consultation.status}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="ml-2">
-                    {consultation.status}
-                  </Badge>
+                  <div className="flex flex-col gap-1 border-l pl-6">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <User className="h-4 w-4" />
+                      <span className="font-medium">{consultation.patientName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600 text-sm">
+                      <Cake className="h-4 w-4" />
+                      <span>DOB: {consultation.patientDOB}</span>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-gray-700">
                   <User className="h-4 w-4" />
-                  <span className="font-medium">{consultation.doctorName}</span>
+                  <span className="font-medium">Dr. {consultation.doctorName}</span>
                 </div>
               </div>
 

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { FileText, TestTube, X } from "lucide-react"
+import { FileText, TestTube, X, ArrowLeft } from "lucide-react"
 
 export default function PatientDetailPage({ params }) {
   const { id } = use(params)
@@ -188,7 +188,18 @@ export default function PatientDetailPage({ params }) {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-sky-500 text-white px-6 py-4">
-        <p className="text-sm">Home &gt; Patient Information</p>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push("/doctor/patients")}
+            className="text-white hover:bg-white/20 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Patient Management
+          </Button>
+          <span className="text-sm">Home &gt; Patient Information</span>
+        </div>
       </div>
 
       <div className="p-6">
