@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { appointmentsStore, getStoreInfo } from "@/lib/appointments-store";
+import { sendAppointmentNotification } from "@/lib/notifications";
 
 export async function GET() {
   const storeInfo = getStoreInfo();
@@ -41,6 +42,19 @@ export async function POST(request) {
       storeAfter.appointmentsCount
     );
     console.log("[v0] All appointments:", appointmentsStore.appointments);
+
+    if (newAppointment.contactNumber && newAppointment.email) {
+      await sendAppointmentNotification({
+        userId: null, // Will be set when user system is implemented
+        appointmentId: newAppointment.id,
+        email: newAppointment.email,
+        phone: newAppointment.contactNumber,
+        patientName: newAppointment.fullName,
+        status: "pending",
+        appointmentDate: `${newAppointment.appointmentDate} at ${newAppointment.appointmentTime}`,
+        reason: newAppointment.reason || "General Consultation",
+      });
+    }
 
     return NextResponse.json(newAppointment, { status: 201 });
   } catch (error) {

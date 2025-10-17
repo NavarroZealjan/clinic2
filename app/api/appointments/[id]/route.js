@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAppointmentsStore } from "@/lib/appointments-store";
 import { query } from "@/lib/db";
+import { sendAppointmentNotification } from "@/lib/notifications";
 
 export async function PATCH(request, { params }) {
   try {
@@ -41,22 +42,33 @@ export async function PATCH(request, { params }) {
       store.appointments[appointmentIndex]
     );
 
-    if (status === "approved") {
-      const appointment = store.appointments[appointmentIndex];
+    const appointment = store.appointments[appointmentIndex];
 
+    if (appointment.email && appointment.contactNumber) {
+      await sendAppointmentNotification({
+        userId: null, // Will be set when user system is implemented
+        appointmentId: appointment.id,
+        email: appointment.email,
+        phone: appointment.contactNumber,
+        patientName: appointment.fullName,
+        status: status,
+        appointmentDate: `${appointment.appointmentDate} at ${appointment.appointmentTime}`,
+        reason: appointment.reason || "General Consultation",
+      });
+    }
+
+    if (status === "approved") {
       try {
         console.log(
           `[v0] Creating patient record for approved appointment ${id}`
         );
 
-        // Check if patient already exists by email
         const existingPatient = await query(
           `SELECT id FROM patients WHERE email = $1`,
           [appointment.email]
         );
 
         if (existingPatient.rows.length === 0) {
-          // Create new patient record
           const patientResult = await query(
             `INSERT INTO patients (
               full_name, email, address, date_of_birth, blood_type, 
@@ -88,7 +100,6 @@ export async function PATCH(request, { params }) {
         }
       } catch (dbError) {
         console.error(`[v0] Error creating patient record:`, dbError);
-        // Don't fail the appointment approval if patient creation fails
       }
     }
 
