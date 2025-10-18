@@ -69,7 +69,7 @@ export async function POST(request) {
     console.log("[v0] Attempting database insert...");
     const result = await query(
       `INSERT INTO patients (
-        full_name, email, address, dob, blood_type, 
+        full_name, email, address, date_of_birth, blood_type, 
         contact_number, gender, emergency_contact_name, emergency_contact_number
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *`,
@@ -77,7 +77,7 @@ export async function POST(request) {
         data.fullName,
         data.email,
         data.address,
-        data.dob,
+        data.dateOfBirth || data.dob, // Support both field names for compatibility
         data.bloodType,
         data.contactNumber,
         data.gender,

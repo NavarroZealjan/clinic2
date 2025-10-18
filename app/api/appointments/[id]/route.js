@@ -46,7 +46,7 @@ export async function PATCH(request, { params }) {
 
     if (appointment.email && appointment.contactNumber) {
       await sendAppointmentNotification({
-        userId: null, // Will be set when user system is implemented
+        userId: null,
         appointmentId: appointment.id,
         email: appointment.email,
         phone: appointment.contactNumber,
@@ -59,16 +59,41 @@ export async function PATCH(request, { params }) {
 
     if (status === "approved") {
       try {
+        console.log(`[v0] ========================================`);
         console.log(
           `[v0] Creating patient record for approved appointment ${id}`
         );
+        console.log(
+          `[v0] Appointment data:`,
+          JSON.stringify(appointment, null, 2)
+        );
 
+        // Check if patient already exists
         const existingPatient = await query(
           `SELECT id FROM patients WHERE email = $1`,
           [appointment.email]
         );
+        console.log(
+          `[v0] Existing patient check result:`,
+          existingPatient.rows
+        );
 
         if (existingPatient.rows.length === 0) {
+          console.log(
+            `[v0] No existing patient found. Creating new patient...`
+          );
+          console.log(`[v0] Patient data to insert:`, {
+            fullName: appointment.fullName,
+            email: appointment.email,
+            address: appointment.address,
+            dateOfBirth: appointment.dateOfBirth,
+            bloodType: appointment.bloodType,
+            contactNumber: appointment.contactNumber,
+            gender: appointment.gender,
+            emergencyContactName: appointment.emergencyContactName,
+            emergencyContactNumber: appointment.emergencyContactNumber,
+          });
+
           const patientResult = await query(
             `INSERT INTO patients (
               full_name, email, address, date_of_birth, blood_type, 
@@ -89,17 +114,26 @@ export async function PATCH(request, { params }) {
             ]
           );
 
-          console.log(
-            `[v0] Patient record created successfully:`,
-            patientResult.rows[0]
-          );
+          console.log(`[v0] ✅ Patient record created successfully!`);
+          console.log(`[v0] New patient:`, patientResult.rows[0]);
+          console.log(`[v0] ========================================`);
         } else {
           console.log(
-            `[v0] Patient already exists with email: ${appointment.email}`
+            `[v0] ⚠️ Patient already exists with email: ${appointment.email}`
           );
+          console.log(
+            `[v0] Existing patient ID: ${existingPatient.rows[0].id}`
+          );
+          console.log(`[v0] ========================================`);
         }
       } catch (dbError) {
-        console.error(`[v0] Error creating patient record:`, dbError);
+        console.error(`[v0] ========================================`);
+        console.error(`[v0] ❌ ERROR creating patient record:`);
+        console.error(`[v0] Error message:`, dbError.message);
+        console.error(`[v0] Error code:`, dbError.code);
+        console.error(`[v0] Error detail:`, dbError.detail);
+        console.error(`[v0] Full error:`, dbError);
+        console.error(`[v0] ========================================`);
       }
     }
 

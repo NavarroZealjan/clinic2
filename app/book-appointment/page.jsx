@@ -5,7 +5,7 @@ export default function BookAppointmentPage() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <img
-        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-9sTQy9nGRvs9AUofKyU3RzWibNi1Ol.png"
+        src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-2QOM8N71nwLkZittWL1pEgMwa9872C.png"
         alt="Doctor with patient"
         className="absolute inset-0 w-full h-full object-cover"
       />
