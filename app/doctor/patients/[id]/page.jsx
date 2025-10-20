@@ -37,6 +37,7 @@ export default function PatientDetailPage({ params }) {
 
   useEffect(() => {
     fetchPatient()
+    fetchMedicalRecords()
   }, [id])
 
   const fetchPatient = async () => {
@@ -68,6 +69,50 @@ export default function PatientDetailPage({ params }) {
     }
   }
 
+  const fetchMedicalRecords = async () => {
+    try {
+      console.log("[v0] Fetching medical records for patient ID:", id)
+      const response = await fetch(`/api/patients/${id}`)
+      console.log("[v0] Fetch response status:", response.status)
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log("[v0] Received patient data:", data)
+
+        const transformedHistory = (data.medical_history || []).map((record) => ({
+          id: record.id,
+          date: record.date,
+          diagnosis: record.diagnosis,
+          createdAt: new Date(record.created_at).toLocaleString(),
+        }))
+        console.log("[v0] Transformed medical history:", transformedHistory)
+        setMedicalHistories(transformedHistory)
+
+        const transformedLabResults = (data.lab_results || []).map((result) => ({
+          id: result.id,
+          date: result.date,
+          fileName: result.file_name || "No file",
+          fileUrl: result.file_url,
+          createdAt: new Date(result.created_at).toLocaleString(),
+        }))
+        console.log("[v0] Transformed lab results:", transformedLabResults)
+        setLabResults(transformedLabResults)
+
+        const transformedNotes = (data.notes || []).map((note) => ({
+          id: note.id,
+          content: note.content,
+          createdAt: new Date(note.created_at).toLocaleString(),
+        }))
+        console.log("[v0] Transformed notes:", transformedNotes)
+        setNotes(transformedNotes)
+      } else {
+        console.error("[v0] Failed to fetch medical records, status:", response.status)
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching medical records:", error)
+    }
+  }
+
   const calculateAge = (dateOfBirth) => {
     const today = new Date()
     const birthDate = new Date(dateOfBirth)
@@ -96,55 +141,194 @@ export default function PatientDetailPage({ params }) {
     }
   }
 
-  const handleAddMedicalHistory = () => {
-    if (newMedicalHistory.diagnosis.trim()) {
-      setMedicalHistories([
-        ...medicalHistories,
-        {
-          id: Date.now(),
-          ...newMedicalHistory,
-          createdAt: new Date().toLocaleString(),
-        },
-      ])
-      setNewMedicalHistory({
-        date: new Date().toISOString().split("T")[0],
-        diagnosis: "",
+  const handleAddMedicalHistory = async () => {
+    console.log("[v0] === SAVE MEDICAL HISTORY CLICKED ===")
+
+    if (!newMedicalHistory.diagnosis.trim()) {
+      alert("⚠️ Please enter a diagnosis before saving")
+      return
+    }
+
+    try {
+      console.log("[v0] Sending POST request to save medical history")
+      console.log("[v0] Patient ID:", id)
+      console.log("[v0] Data:", { date: newMedicalHistory.date, diagnosis: newMedicalHistory.diagnosis })
+
+      const response = await fetch(`/api/patients/${id}/medical-history`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: newMedicalHistory.date,
+          diagnosis: newMedicalHistory.diagnosis,
+        }),
       })
-      setShowMedicalHistoryModal(false)
+
+      console.log("[v0] Response status:", response.status)
+
+      if (response.ok) {
+        const savedRecord = await response.json()
+        console.log("[v0] Successfully saved:", savedRecord)
+
+        setMedicalHistories([
+          ...medicalHistories,
+          {
+            id: savedRecord.id,
+            date: savedRecord.date,
+            diagnosis: savedRecord.diagnosis,
+            createdAt: new Date(savedRecord.created_at).toLocaleString(),
+          },
+        ])
+
+        setNewMedicalHistory({
+          date: new Date().toISOString().split("T")[0],
+          diagnosis: "",
+        })
+        setShowMedicalHistoryModal(false)
+        alert("✅ Medical history saved successfully!")
+      } else {
+        const errorText = await response.text()
+        console.error("[v0] Save failed:", errorText)
+        alert("❌ Failed to save: " + errorText)
+      }
+    } catch (error) {
+      console.error("[v0] Error:", error)
+      alert("❌ Error: " + error.message)
     }
   }
 
-  const handleAddLabResult = () => {
+  const handleAddLabResult = async () => {
     if (newLabResult.fileName) {
-      setLabResults([
-        ...labResults,
-        {
-          id: Date.now(),
-          ...newLabResult,
-          createdAt: new Date().toLocaleString(),
-        },
-      ])
-      setNewLabResult({
-        date: new Date().toISOString().split("T")[0],
-        file: null,
-        fileName: "",
-      })
-      setShowLabResultModal(false)
+      try {
+        console.log("[v0] Saving lab result:", newLabResult)
+        const response = await fetch(`/api/patients/${id}/lab-results`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: newLabResult.date,
+            fileName: newLabResult.fileName,
+            fileUrl: null,
+          }),
+        })
+
+        console.log("[v0] Save response status:", response.status)
+
+        if (response.ok) {
+          const savedResult = await response.json()
+          console.log("[v0] Saved lab result:", savedResult)
+          setLabResults([
+            ...labResults,
+            {
+              id: savedResult.id,
+              date: savedResult.date,
+              fileName: savedResult.file_name,
+              fileUrl: savedResult.file_url,
+              createdAt: new Date(savedResult.created_at).toLocaleString(),
+            },
+          ])
+          setNewLabResult({
+            date: new Date().toISOString().split("T")[0],
+            file: null,
+            fileName: "",
+          })
+          setShowLabResultModal(false)
+          alert("Lab result saved successfully!")
+        } else {
+          const errorData = await response.json()
+          console.error("[v0] Failed to save lab result:", errorData)
+          alert("Failed to save lab result: " + (errorData.error || "Unknown error"))
+        }
+      } catch (error) {
+        console.error("[v0] Error saving lab result:", error)
+        alert("Failed to save lab result: " + error.message)
+      }
     }
   }
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (newNote.trim()) {
-      setNotes([
-        ...notes,
-        {
-          id: Date.now(),
-          content: newNote,
-          createdAt: new Date().toLocaleString(),
-        },
-      ])
-      setNewNote("")
-      setShowNotesModal(false)
+      try {
+        console.log("[v0] Saving note:", newNote)
+        const response = await fetch(`/api/patients/${id}/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: newNote,
+          }),
+        })
+
+        console.log("[v0] Save response status:", response.status)
+
+        if (response.ok) {
+          const savedNote = await response.json()
+          console.log("[v0] Saved note:", savedNote)
+          setNotes([
+            ...notes,
+            {
+              id: savedNote.id,
+              content: savedNote.content,
+              createdAt: new Date(savedNote.created_at).toLocaleString(),
+            },
+          ])
+          setNewNote("")
+          setShowNotesModal(false)
+          alert("Note saved successfully!")
+        } else {
+          const errorData = await response.json()
+          console.error("[v0] Failed to save note:", errorData)
+          alert("Failed to save note: " + (errorData.error || "Unknown error"))
+        }
+      } catch (error) {
+        console.error("[v0] Error saving note:", error)
+        alert("Failed to save note: " + error.message)
+      }
+    }
+  }
+
+  const handleDeleteMedicalHistory = async (historyId) => {
+    try {
+      const response = await fetch(`/api/patients/${id}/medical-history?entryId=${historyId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setMedicalHistories(medicalHistories.filter((h) => h.id !== historyId))
+        alert("Medical history deleted successfully!")
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting medical history:", error)
+      alert("Failed to delete medical history")
+    }
+  }
+
+  const handleDeleteLabResult = async (resultId) => {
+    try {
+      const response = await fetch(`/api/patients/${id}/lab-results?entryId=${resultId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setLabResults(labResults.filter((r) => r.id !== resultId))
+        alert("Lab result deleted successfully!")
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting lab result:", error)
+      alert("Failed to delete lab result")
+    }
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    try {
+      const response = await fetch(`/api/patients/${id}/notes?entryId=${noteId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setNotes(notes.filter((n) => n.id !== noteId))
+        alert("Note deleted successfully!")
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting note:", error)
+      alert("Failed to delete note")
     }
   }
 
@@ -423,12 +607,11 @@ export default function PatientDetailPage({ params }) {
                     {medicalHistories.map((history) => (
                       <Card key={history.id} className="p-4 bg-gray-50">
                         <div className="flex justify-between items-start mb-2">
-                          <p className="text-sm font-medium">{history.date}</p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setMedicalHistories(medicalHistories.filter((h) => h.id !== history.id))}
-                          >
+                          <div>
+                            <p className="text-sm font-medium">Consultation Date: {history.date}</p>
+                            <p className="text-xs text-gray-500">Added: {history.createdAt}</p>
+                          </div>
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteMedicalHistory(history.id)}>
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
@@ -443,7 +626,6 @@ export default function PatientDetailPage({ params }) {
                               ))}
                           </ul>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">Added: {history.createdAt}</p>
                       </Card>
                     ))}
                   </div>
@@ -473,11 +655,7 @@ export default function PatientDetailPage({ params }) {
                       <Card key={result.id} className="p-4 bg-gray-50">
                         <div className="flex justify-between items-start mb-2">
                           <p className="text-sm font-medium">{result.date}</p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setLabResults(labResults.filter((r) => r.id !== result.id))}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteLabResult(result.id)}>
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
@@ -511,11 +689,7 @@ export default function PatientDetailPage({ params }) {
                     <Card key={note.id} className="p-4">
                       <div className="flex justify-between items-start mb-2">
                         <p className="text-xs text-gray-500">{note.createdAt}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setNotes(notes.filter((n) => n.id !== note.id))}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteNote(note.id)}>
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
@@ -553,10 +727,14 @@ export default function PatientDetailPage({ params }) {
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={() => setShowMedicalHistoryModal(false)}>
-              Close
+              Cancel
             </Button>
-            <Button onClick={handleAddMedicalHistory} className="bg-sky-500 hover:bg-sky-600">
-              Add Entry
+            <Button
+              onClick={handleAddMedicalHistory}
+              className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6"
+              size="lg"
+            >
+              💾 Save Medical History
             </Button>
           </div>
         </DialogContent>

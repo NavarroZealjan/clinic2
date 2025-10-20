@@ -8,6 +8,8 @@ export async function POST(request, { params }) {
     const patientId = Number.parseInt(id);
     const data = await request.json();
 
+    console.log("[v0] Adding note for patient:", patientId, data);
+
     const result = await query(
       `INSERT INTO notes (patient_id, content)
        VALUES ($1, $2)
@@ -15,10 +17,14 @@ export async function POST(request, { params }) {
       [patientId, data.content]
     );
 
+    console.log("[v0] Note saved successfully:", result.rows[0]);
     return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error) {
     console.error("[v0] Error adding note:", error);
-    return NextResponse.json({ error: "Failed to add note" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to add note", details: error.message },
+      { status: 500 }
+    );
   }
 }
 

@@ -59,48 +59,25 @@ export async function PATCH(request, { params }) {
 
     if (status === "approved") {
       try {
-        console.log(`[v0] ========================================`);
         console.log(
           `[v0] Creating patient record for approved appointment ${id}`
         );
-        console.log(
-          `[v0] Appointment data:`,
-          JSON.stringify(appointment, null, 2)
-        );
 
-        // Check if patient already exists
         const existingPatient = await query(
           `SELECT id FROM patients WHERE email = $1`,
           [appointment.email]
         );
-        console.log(
-          `[v0] Existing patient check result:`,
-          existingPatient.rows
-        );
+
+        let patientId;
 
         if (existingPatient.rows.length === 0) {
-          console.log(
-            `[v0] No existing patient found. Creating new patient...`
-          );
-          console.log(`[v0] Patient data to insert:`, {
-            fullName: appointment.fullName,
-            email: appointment.email,
-            address: appointment.address,
-            dateOfBirth: appointment.dateOfBirth,
-            bloodType: appointment.bloodType,
-            contactNumber: appointment.contactNumber,
-            gender: appointment.gender,
-            emergencyContactName: appointment.emergencyContactName,
-            emergencyContactNumber: appointment.emergencyContactNumber,
-          });
-
           const patientResult = await query(
             `INSERT INTO patients (
               full_name, email, address, date_of_birth, blood_type, 
               contact_number, gender, emergency_contact_name, emergency_contact_number,
               created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
-            RETURNING *`,
+            RETURNING id`,
             [
               appointment.fullName,
               appointment.email,
@@ -114,26 +91,39 @@ export async function PATCH(request, { params }) {
             ]
           );
 
-          console.log(`[v0] ✅ Patient record created successfully!`);
-          console.log(`[v0] New patient:`, patientResult.rows[0]);
-          console.log(`[v0] ========================================`);
+          patientId = patientResult.rows[0].id;
+          console.log(
+            `[v0] Patient record created successfully with ID:`,
+            patientId
+          );
         } else {
-          console.log(
-            `[v0] ⚠️ Patient already exists with email: ${appointment.email}`
-          );
-          console.log(
-            `[v0] Existing patient ID: ${existingPatient.rows[0].id}`
-          );
-          console.log(`[v0] ========================================`);
+          patientId = existingPatient.rows[0].id;
+          console.log(`[v0] Patient already exists with ID: ${patientId}`);
         }
+
+        await query(
+          `INSERT INTO appointments (
+            patient_id, appointment_date, appointment_time, consultation_type, 
+            doctor_name, status, created_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+          [
+            patientId,
+            appointment.appointmentDate,
+            appointment.appointmentTime,
+            appointment.consultationType || "General Consultation",
+            "Dr. Smith", // Default doctor name
+            "completed",
+          ]
+        );
+
+        console.log(
+          `[v0] Appointment saved to history for patient ${patientId}`
+        );
       } catch (dbError) {
-        console.error(`[v0] ========================================`);
-        console.error(`[v0] ❌ ERROR creating patient record:`);
-        console.error(`[v0] Error message:`, dbError.message);
-        console.error(`[v0] Error code:`, dbError.code);
-        console.error(`[v0] Error detail:`, dbError.detail);
-        console.error(`[v0] Full error:`, dbError);
-        console.error(`[v0] ========================================`);
+        console.error(
+          `[v0] Error creating patient record or appointment history:`,
+          dbError
+        );
       }
     }
 

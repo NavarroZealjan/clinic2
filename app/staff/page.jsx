@@ -1,16 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Check, X, Eye, ArrowLeft } from "lucide-react"
+import { Check, X, Eye } from "lucide-react"
 
-export default function AppointmentsPendingPage() {
-  const router = useRouter()
+export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
   const [filteredAppointments, setFilteredAppointments] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -23,9 +21,7 @@ export default function AppointmentsPendingPage() {
   }, [])
 
   useEffect(() => {
-    const filtered = appointments.filter(
-      (apt) => apt.status === "pending" && apt.fullName.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+    const filtered = appointments.filter((apt) => apt.fullName.toLowerCase().includes(searchTerm.toLowerCase()))
     setFilteredAppointments(filtered)
   }, [searchTerm, appointments])
 
@@ -34,8 +30,9 @@ export default function AppointmentsPendingPage() {
       const response = await fetch("/api/appointments")
       const data = await response.json()
       setAppointments(data)
+      setFilteredAppointments(data)
     } catch (error) {
-      console.error("[v0] Error fetching appointments:", error)
+      console.error("Error fetching appointments:", error)
     } finally {
       setLoading(false)
     }
@@ -50,16 +47,18 @@ export default function AppointmentsPendingPage() {
       })
 
       if (response.ok) {
-        if (status === "approved") {
-          alert("Appointment approved successfully!")
-        } else if (status === "rejected") {
-          alert("Appointment rejected successfully!")
-        }
-        console.log(`[v0] Appointment ${id} ${status}`)
         fetchAppointments()
+        if (status === "approved") {
+          alert("✅ Appointment approved successfully!")
+        } else if (status === "rejected") {
+          alert("❌ Appointment rejected successfully.")
+        }
+      } else {
+        alert("⚠️ Failed to update appointment. Please try again.")
       }
     } catch (error) {
-      console.error("[v0] Error updating appointment:", error)
+      console.error("Error updating appointment:", error)
+      alert("⚠️ Failed to update appointment. Please try again.")
     }
   }
 
@@ -77,121 +76,115 @@ export default function AppointmentsPendingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-cyan-500 text-white px-6 py-4">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/staff/dashboard")}
-            className="text-white hover:bg-cyan-600 hover:text-white h-8 px-2"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </Button>
-          <div className="text-sm">Home &gt; Appointment Pending</div>
-        </div>
+    <div className="p-6">
+      <div className="bg-cyan-500 text-white p-4 mb-6 rounded-t-lg">
+        <div className="text-sm">Home &gt; Appointment Pending</div>
       </div>
 
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Appointment Pending</h1>
+      <div className="bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold mb-6">Appointment Pending</h1>
 
-        <div className="bg-white rounded-lg border shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-4 pb-4 border-b">
-            <div className="w-6 h-6 bg-slate-800 rounded flex items-center justify-center">
-              <div className="w-4 h-3 border-2 border-white"></div>
-            </div>
-            <span className="font-medium">List of Appointment</span>
-          </div>
-
-          <div className="flex items-center justify-between mb-4">
+        <div className="border rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <div className="flex items-center gap-2">
               <span className="text-sm">Show</span>
-              <select className="border rounded px-3 py-1 text-sm">
+              <select className="border rounded px-2 py-1">
                 <option>10</option>
                 <option>25</option>
                 <option>50</option>
               </select>
               <span className="text-sm">entries</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2">
               <span className="text-sm">Search</span>
-              <Input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-48 h-9"
-              />
+              <Input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-48" />
             </div>
           </div>
 
-          <div className="border rounded">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead className="w-16 text-center font-semibold">#</TableHead>
-                  <TableHead className="font-semibold">STATUS</TableHead>
-                  <TableHead className="font-semibold">PATIENT NAME</TableHead>
-                  <TableHead className="font-semibold">DATE APPOINTMENT</TableHead>
-                  <TableHead className="font-semibold">TIME SLOT</TableHead>
-                  <TableHead className="font-semibold">ACTIONS</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">#</TableHead>
+                <TableHead>STATUS</TableHead>
+                <TableHead>PATIENT NAME</TableHead>
+                <TableHead>DATE APPOINTMENT</TableHead>
+                <TableHead>TIME SLOT</TableHead>
+                <TableHead>ACTIONS</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    Loading...
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      Loading...
+              ) : filteredAppointments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    No appointments found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAppointments.map((appointment, index) => (
+                  <TableRow key={appointment.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          appointment.status === "pending"
+                            ? "default"
+                            : appointment.status === "approved"
+                              ? "success"
+                              : "destructive"
+                        }
+                        className={
+                          appointment.status === "pending"
+                            ? "bg-cyan-500"
+                            : appointment.status === "approved"
+                              ? "bg-emerald-500"
+                              : "bg-red-500"
+                        }
+                      >
+                        {appointment.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium uppercase">{appointment.fullName}</TableCell>
+                    <TableCell>{formatDate(appointment.appointmentDate)}</TableCell>
+                    <TableCell>{appointment.appointmentTime}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-emerald-500 hover:bg-emerald-600"
+                          onClick={() => handleStatusUpdate(appointment.id, "approved")}
+                          disabled={appointment.status !== "pending"}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-cyan-500 text-cyan-500 hover:bg-cyan-50 bg-transparent"
+                          onClick={() => viewAppointment(appointment)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleStatusUpdate(appointment.id, "rejected")}
+                          disabled={appointment.status !== "pending"}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredAppointments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      No pending appointments found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAppointments.map((appointment, index) => (
-                    <TableRow key={appointment.id}>
-                      <TableCell className="text-center">{index + 1}</TableCell>
-                      <TableCell>
-                        <Badge className="bg-cyan-500 hover:bg-cyan-600 text-white">Pending</Badge>
-                      </TableCell>
-                      <TableCell className="font-medium uppercase">{appointment.fullName}</TableCell>
-                      <TableCell>{formatDate(appointment.appointmentDate)}</TableCell>
-                      <TableCell>{appointment.appointmentTime}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-emerald-500 hover:bg-emerald-600 h-8 w-8 p-0"
-                            onClick={() => handleStatusUpdate(appointment.id, "approved")}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-cyan-500 hover:bg-cyan-600 h-8 w-8 p-0"
-                            onClick={() => viewAppointment(appointment)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleStatusUpdate(appointment.id, "rejected")}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
 
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-slate-600">
@@ -201,7 +194,7 @@ export default function AppointmentsPendingPage() {
               <Button variant="outline" size="sm" disabled>
                 Previous
               </Button>
-              <Button size="sm" className="bg-cyan-500 hover:bg-cyan-600">
+              <Button size="sm" className="bg-cyan-500">
                 1
               </Button>
               <Button variant="outline" size="sm" disabled>
@@ -263,6 +256,20 @@ export default function AppointmentsPendingPage() {
                 <div>
                   <p className="text-sm font-medium text-slate-500">Appointment Time</p>
                   <p className="text-base">{selectedAppointment.appointmentTime}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Status</p>
+                  <Badge
+                    className={
+                      selectedAppointment.status === "pending"
+                        ? "bg-cyan-500"
+                        : selectedAppointment.status === "approved"
+                          ? "bg-emerald-500"
+                          : "bg-red-500"
+                    }
+                  >
+                    {selectedAppointment.status}
+                  </Badge>
                 </div>
               </div>
             </div>

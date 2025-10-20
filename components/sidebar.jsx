@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Calendar, Users, FileText, Settings, LogOut, ChevronDown, ChevronRight } from "lucide-react"
+import { Home, Calendar, Users, FileText, LogOut, ChevronDown, ChevronRight } from "lucide-react"
 import { useState } from "react"
 
 const menuItems = [
@@ -15,12 +15,10 @@ const menuItems = [
     href: "/doctor/patients",
     subItems: [
       { label: "Patient Management", href: "/doctor/patients" },
-      { label: "Patient Information", href: "/doctor/patients/information" },
       { label: "Patient Records", href: "/doctor/patients/records" },
     ],
   },
   { icon: FileText, label: "Reports", href: "/doctor/reports" },
-  { icon: Settings, label: "Settings", href: "/doctor/settings" },
 ]
 
 export function Sidebar() {
