@@ -9,6 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  serverComponentsExternalPackages: ["pg", "pg-pool"],
 };
 
 export default nextConfig;

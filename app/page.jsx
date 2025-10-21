@@ -21,12 +21,20 @@ export default function HomePage() {
         <h1 className="text-5xl font-bold text-slate-900 mb-4">Welcome to E-CLINIC</h1>
         <p className="text-xl text-slate-600 mb-12">Your trusted healthcare management system</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <Link href="/book-appointment">
             <Button size="lg" className="w-full bg-cyan-500 hover:bg-cyan-600 text-white py-8 text-lg">
               Book Appointment
             </Button>
           </Link>
+          <Link href="/my-appointments">
+            <Button size="lg" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-8 text-lg">
+              My Appointments
+            </Button>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link href="/staff/login">
             <Button
               size="lg"

@@ -3,12 +3,13 @@ import { getAppointmentsStore } from "@/lib/appointments-store";
 import { query } from "@/lib/db";
 import { sendAppointmentNotification } from "@/lib/notifications";
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, context) {
   try {
-    const { id } = params;
-    const { status } = await request.json();
+    const { id } = await context.params; // ✅ FIXED
 
+    const { status } = await request.json();
     const store = getAppointmentsStore();
+
     console.log(
       `[v0] PATCH /api/appointments/${id} - Updating status to: ${status}`
     );
@@ -44,6 +45,7 @@ export async function PATCH(request, { params }) {
 
     const appointment = store.appointments[appointmentIndex];
 
+    // Send notification if contact details are available
     if (appointment.email && appointment.contactNumber) {
       await sendAppointmentNotification({
         userId: null,
@@ -57,6 +59,7 @@ export async function PATCH(request, { params }) {
       });
     }
 
+    // Auto-create patient record when approved
     if (status === "approved") {
       try {
         console.log(
@@ -73,7 +76,7 @@ export async function PATCH(request, { params }) {
         if (existingPatient.rows.length === 0) {
           const patientResult = await query(
             `INSERT INTO patients (
-              full_name, email, address, date_of_birth, blood_type, 
+              full_name, email, address, date_of_birth, blood_type,
               contact_number, gender, emergency_contact_name, emergency_contact_number,
               created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
@@ -103,7 +106,7 @@ export async function PATCH(request, { params }) {
 
         await query(
           `INSERT INTO appointments (
-            patient_id, appointment_date, appointment_time, consultation_type, 
+            patient_id, appointment_date, appointment_time, consultation_type,
             doctor_name, status, created_at
           ) VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
           [
@@ -111,7 +114,7 @@ export async function PATCH(request, { params }) {
             appointment.appointmentDate,
             appointment.appointmentTime,
             appointment.consultationType || "General Consultation",
-            "Dr. Smith", // Default doctor name
+            "Dr. Smith",
             "completed",
           ]
         );
@@ -137,9 +140,9 @@ export async function PATCH(request, { params }) {
   }
 }
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
-    const { id } = params;
+    const { id } = await context.params; // ✅ FIXED
     const store = getAppointmentsStore();
 
     const appointment = store.appointments.find(
@@ -155,6 +158,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json(appointment);
   } catch (error) {
+    console.error("[v0] Error fetching appointment:", error);
     return NextResponse.json(
       { error: "Failed to fetch appointment" },
       { status: 500 }

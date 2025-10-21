@@ -18,6 +18,7 @@ const menuItems = [
       { label: "Patient Records", href: "/doctor/patients/records" },
     ],
   },
+  { icon: Calendar, label: "Availability", href: "/doctor/availability" },
   { icon: FileText, label: "Reports", href: "/doctor/reports" },
 ]
 
