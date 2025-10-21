@@ -116,10 +116,10 @@ export default function LoginPage() {
                 <strong>Doctor:</strong> dr.wison@clinic.com / doctor123
               </p>
               <p>
-                <strong>Staff:</strong> staff1 / password123
+                <strong>Staff:</strong> datan@gmail.com / capstone2
               </p>
               <p>
-                <strong>Admin:</strong> zealjan@gmail.com / capstone2
+                <strong></strong> 
               </p>
             </div>
           </div>
