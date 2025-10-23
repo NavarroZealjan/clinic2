@@ -25,10 +25,11 @@ export function middleware(req: NextRequest) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;   
     if (pathname.startsWith("/admin") && decoded.role !== "admin") {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("", req.url));
     }
+    
     /* ----REMOVE CONDITION FOR /doctor ----*/
 
     // if (pathname.startsWith('/doctor') && decoded.role !== 'doctor') {
@@ -48,5 +49,5 @@ export const config = {
   /* -- REMOVE /doctor/:path ------- */
   // matcher: ["/doctor/:path*", "/admin/:path*", "/login", "/api/admin/:path*"],
 
-  matcher: ["/admin/:path*", "/login", "/api/admin/:path*"],
+  matcher: [ "/login", "/api/admin/:path*"],
 };
