@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { ChatbotWidget } from "@/components/chatbot-widget"
 
 export default function HomePage() {
   return (
@@ -54,6 +55,8 @@ export default function HomePage() {
             </Button>
           </Link>
         </div>
+
+        <ChatbotWidget />
       </div>
     </div>
   )

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
+import { query } from "@/lib/db";
 
 const MOCK_USERS = [
   {
@@ -51,9 +53,12 @@ export async function POST(request) {
 
     console.log("[v0] Login attempt for:", username);
 
-    const user = MOCK_USERS.find((u) => u.username === username);
+    const result = await query(
+      "SELECT id, email, username, password, full_name, role FROM users WHERE email = $1 OR username = $1",
+      [username]
+    );
 
-    if (!user) {
+    if (result.rows.length === 0) {
       console.log("[v0] User not found:", username);
       return NextResponse.json(
         { error: "Invalid username or password" },
@@ -61,7 +66,13 @@ export async function POST(request) {
       );
     }
 
-    console.log("[v0] User found:", user.username, "Role:", user.role);
+    const user = result.rows[0];
+    console.log(
+      "[v0] User found:",
+      user.username || user.email,
+      "Role:",
+      user.role
+    );
 
     if (password !== user.password) {
       console.log("[v0] Invalid password");
@@ -71,17 +82,38 @@ export async function POST(request) {
       );
     }
 
-    console.log("[v0] Login successful for:", user.username);
+    console.log("[v0] Login successful for:", user.username || user.email);
 
-    return NextResponse.json({
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username || user.email,
+        role: user.role,
+        fullName: user.full_name,
+      },
+      process.env.JWT_SECRET || "your-secret-key-change-this",
+      { expiresIn: "7d" }
+    );
+
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
-        username: user.username,
+        username: user.username || user.email,
         role: user.role,
-        fullName: user.fullName,
+        fullName: user.full_name,
       },
     });
+
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("[v0] Login error:", error);
     return NextResponse.json(

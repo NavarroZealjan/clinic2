@@ -47,7 +47,13 @@ export default function AppointmentsApprovedPage() {
   }
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    if (!dateString) return "Not provided"
+
+    // Handle both date-only strings and full ISO timestamps
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "Not provided"
+
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -208,23 +214,23 @@ export default function AppointmentsApprovedPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Gender</p>
-                  <p className="text-base">{selectedAppointment.gender}</p>
+                  <p className="text-base">{selectedAppointment.gender || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Blood Type</p>
-                  <p className="text-base">{selectedAppointment.bloodType}</p>
+                  <p className="text-base">{selectedAppointment.bloodType || "Not provided"}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-slate-500">Address</p>
-                  <p className="text-base">{selectedAppointment.address}</p>
+                  <p className="text-base">{selectedAppointment.address || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Emergency Contact</p>
-                  <p className="text-base">{selectedAppointment.emergencyContactName}</p>
+                  <p className="text-base">{selectedAppointment.emergencyContactName || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Emergency Number</p>
-                  <p className="text-base">{selectedAppointment.emergencyContactNumber}</p>
+                  <p className="text-base">{selectedAppointment.emergencyContactNumber || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Appointment Date</p>

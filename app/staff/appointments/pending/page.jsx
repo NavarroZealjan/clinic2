@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Check, X, Eye, ArrowLeft } from "lucide-react"
+import { Check, Trash2, Eye, ArrowLeft } from "lucide-react"
 
 export default function AppointmentsPendingPage() {
   const router = useRouter()
@@ -69,7 +69,12 @@ export default function AppointmentsPendingPage() {
   }
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    if (!dateString) return "Not provided"
+
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "Not provided"
+
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -164,14 +169,14 @@ export default function AppointmentsPendingPage() {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            className="bg-emerald-500 hover:bg-emerald-600 h-8 w-8 p-0"
+                            className="bg-emerald-500 hover:bg-emerald-600 h-8 w-8 p-0 rounded-full"
                             onClick={() => handleStatusUpdate(appointment.id, "approved")}
                           >
                             <Check className="w-4 h-4" />
                           </Button>
                           <Button
                             size="sm"
-                            className="bg-cyan-500 hover:bg-cyan-600 h-8 w-8 p-0"
+                            className="bg-cyan-500 hover:bg-cyan-600 h-8 w-8 p-0 rounded-full"
                             onClick={() => viewAppointment(appointment)}
                           >
                             <Eye className="w-4 h-4" />
@@ -179,10 +184,10 @@ export default function AppointmentsPendingPage() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 rounded-full"
                             onClick={() => handleStatusUpdate(appointment.id, "rejected")}
                           >
-                            <X className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -238,23 +243,23 @@ export default function AppointmentsPendingPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Gender</p>
-                  <p className="text-base">{selectedAppointment.gender}</p>
+                  <p className="text-base">{selectedAppointment.gender || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Blood Type</p>
-                  <p className="text-base">{selectedAppointment.bloodType}</p>
+                  <p className="text-base">{selectedAppointment.bloodType || "Not provided"}</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-slate-500">Address</p>
-                  <p className="text-base">{selectedAppointment.address}</p>
+                  <p className="text-base">{selectedAppointment.address || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Emergency Contact</p>
-                  <p className="text-base">{selectedAppointment.emergencyContactName}</p>
+                  <p className="text-base">{selectedAppointment.emergencyContactName || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Emergency Number</p>
-                  <p className="text-base">{selectedAppointment.emergencyContactNumber}</p>
+                  <p className="text-base">{selectedAppointment.emergencyContactNumber || "Not provided"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-slate-500">Appointment Date</p>

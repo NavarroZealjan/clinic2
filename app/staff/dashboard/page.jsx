@@ -7,6 +7,7 @@ import { PatientWalkIn } from "@/components/patient-walk-in"
 export default function StaffDashboardPage() {
   const [stats, setStats] = useState({
     totalAppointments: 0,
+    totalPatientsPerweek:0,
     pendingAppointments: 0,
     approvedAppointments: 0,
     todayPatients: 0,

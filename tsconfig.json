@@ -34,7 +34,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-, "app/api/appointments/[id]/route.js"  ],
+, "app/api/appointments/[id]/route.js", "components/chatbot-widget.jsx"  ],
   "exclude": [
     "node_modules"
   ]

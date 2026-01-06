@@ -379,7 +379,8 @@ export function PatientFormModal({ open, onOpenChange, onPatientCreated }) {
                     value={formData.dateOfBirth}
                     onChange={handleInputChange}
                     required
-                  />
+                    disabled
+                  />disabled
                 </div>
 
                 <div className="space-y-2">

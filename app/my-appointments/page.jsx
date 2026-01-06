@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Calendar, Clock, User, X, Edit } from "lucide-react"
+import { ChatbotWidget } from "@/components/chatbot-widget"
 
 export default function MyAppointmentsPage() {
   const [appointments, setAppointments] = useState([])
@@ -341,6 +342,8 @@ export default function MyAppointmentsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      <ChatbotWidget />
     </div>
   )
 }

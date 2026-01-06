@@ -17,3 +17,6 @@ export function CardTitle({ children, className = "" }) {
 export function CardContent({ children, className = "" }) {
   return <div className={className}>{children}</div>;
 }
+export function CardDescription({children, className = ""}){
+  
+}

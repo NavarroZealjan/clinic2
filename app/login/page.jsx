@@ -1,10 +1,15 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from 'next/navigation';
 import { useAuth } from "@/contexts/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import Link from "next/link";
+import { Link2 } from "lucide-react";
+
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -93,8 +98,15 @@ export default function LoginPage() {
                 required
                 className="w-full"
               />
+            <div className="text-right">
+           <Link
+             href="/forgot-password" 
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Forgot password?
+              </Link>
             </div>
-
+            </div>
             <Button
               type="submit"
               disabled={loading}
@@ -103,6 +115,7 @@ export default function LoginPage() {
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+          
 
           {/* Test Credentials Info */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -115,7 +128,8 @@ export default function LoginPage() {
                 <strong>Staff:</strong> staff1 / password123
               </p>
               <p>
-                <strong>Admin:</strong> zealjan@gmail.com / capstone2
+                <strong></strong>
+                
               </p>
             </div>
           </div>
