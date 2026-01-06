@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { FileText, TestTube, X, ArrowLeft } from "lucide-react"
+import { FileText, TestTube, X, ArrowLeft, Printer, Plus } from "lucide-react"
+import { PrescriptionPrint } from "@/components/prescription-print"
 
 export default function PatientDetailPage({ params }) {
   const { id } = use(params)
@@ -21,9 +22,11 @@ export default function PatientDetailPage({ params }) {
   const [showMedicalHistoryModal, setShowMedicalHistoryModal] = useState(false)
   const [showLabResultModal, setShowLabResultModal] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false)
   const [medicalHistories, setMedicalHistories] = useState([])
   const [labResults, setLabResults] = useState([])
   const [notes, setNotes] = useState([])
+  const [prescriptions, setPrescriptions] = useState([])
   const [newMedicalHistory, setNewMedicalHistory] = useState({
     date: new Date().toISOString().split("T")[0],
     diagnosis: "",
@@ -34,10 +37,27 @@ export default function PatientDetailPage({ params }) {
     fileName: "",
   })
   const [newNote, setNewNote] = useState("")
+  const [newPrescription, setNewPrescription] = useState({
+    doctorName: "",
+    date: new Date().toISOString().split("T")[0],
+    diagnosis: "",
+    notes: "",
+    medications: [
+      {
+        name: "",
+        dosage: "",
+        frequency: "",
+        duration: "",
+        instructions: "",
+      },
+    ],
+  })
+  const [printPrescription, setPrintPrescription] = useState(null)
 
   useEffect(() => {
     fetchPatient()
     fetchMedicalRecords()
+    fetchPrescriptions()
   }, [id])
 
   const fetchPatient = async () => {
@@ -110,6 +130,22 @@ export default function PatientDetailPage({ params }) {
       }
     } catch (error) {
       console.error("[v0] Error fetching medical records:", error)
+    }
+  }
+
+  const fetchPrescriptions = async () => {
+    try {
+      console.log("[v0] Fetching prescriptions for patient ID:", id)
+      const response = await fetch(`/api/patients/${id}/prescriptions`)
+      console.log("[v0] Prescriptions response status:", response.status)
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log("[v0] Prescriptions data:", data)
+        setPrescriptions(data)
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching prescriptions:", error)
     }
   }
 
@@ -284,6 +320,59 @@ export default function PatientDetailPage({ params }) {
     }
   }
 
+  const handleAddPrescription = async () => {
+    if (!newPrescription.doctorName.trim()) {
+      alert("Please enter doctor name")
+      return
+    }
+
+    const hasValidMedication = newPrescription.medications.some((med) => med.name.trim() && med.dosage.trim())
+
+    if (!hasValidMedication) {
+      alert("Please add at least one medication with name and dosage")
+      return
+    }
+
+    try {
+      console.log("[v0] Saving prescription:", newPrescription)
+      const response = await fetch(`/api/patients/${id}/prescriptions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newPrescription),
+      })
+
+      if (response.ok) {
+        const savedPrescription = await response.json()
+        console.log("[v0] Prescription saved:", savedPrescription)
+        setPrescriptions([savedPrescription, ...prescriptions])
+        setNewPrescription({
+          doctorName: "",
+          date: new Date().toISOString().split("T")[0],
+          diagnosis: "",
+          notes: "",
+          medications: [
+            {
+              name: "",
+              dosage: "",
+              frequency: "",
+              duration: "",
+              instructions: "",
+            },
+          ],
+        })
+        setShowPrescriptionModal(false)
+        alert("Prescription saved successfully!")
+      } else {
+        const errorData = await response.json()
+        console.error("[v0] Failed to save prescription:", errorData)
+        alert("Failed to save prescription: " + (errorData.error || "Unknown error"))
+      }
+    } catch (error) {
+      console.error("[v0] Error saving prescription:", error)
+      alert("Failed to save prescription: " + error.message)
+    }
+  }
+
   const handleDeleteMedicalHistory = async (historyId) => {
     try {
       const response = await fetch(`/api/patients/${id}/medical-history?entryId=${historyId}`, {
@@ -332,6 +421,24 @@ export default function PatientDetailPage({ params }) {
     }
   }
 
+  const handleDeletePrescription = async (prescriptionId) => {
+    if (!confirm("Are you sure you want to delete this prescription?")) return
+
+    try {
+      const response = await fetch(`/api/patients/${id}/prescriptions?entryId=${prescriptionId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setPrescriptions(prescriptions.filter((p) => p.id !== prescriptionId))
+        alert("Prescription deleted successfully!")
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting prescription:", error)
+      alert("Failed to delete prescription")
+    }
+  }
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -341,6 +448,43 @@ export default function PatientDetailPage({ params }) {
         fileName: file.name,
       })
     }
+  }
+
+  const handleAddMedication = () => {
+    setNewPrescription({
+      ...newPrescription,
+      medications: [
+        ...newPrescription.medications,
+        {
+          name: "",
+          dosage: "",
+          frequency: "",
+          duration: "",
+          instructions: "",
+        },
+      ],
+    })
+  }
+
+  const handleRemoveMedication = (index) => {
+    const updatedMedications = newPrescription.medications.filter((_, i) => i !== index)
+    setNewPrescription({
+      ...newPrescription,
+      medications: updatedMedications,
+    })
+  }
+
+  const handleMedicationChange = (index, field, value) => {
+    const updatedMedications = [...newPrescription.medications]
+    updatedMedications[index][field] = value
+    setNewPrescription({
+      ...newPrescription,
+      medications: updatedMedications,
+    })
+  }
+
+  const handlePrintPrescription = (prescription) => {
+    setPrintPrescription(prescription)
   }
 
   if (loading) {
@@ -405,6 +549,13 @@ export default function PatientDetailPage({ params }) {
               className={activeTab === "medlab" ? "bg-sky-500 hover:bg-sky-600" : ""}
             >
               Med & Lab
+            </Button>
+            <Button
+              variant={activeTab === "prescriptions" ? "default" : "outline"}
+              onClick={() => setActiveTab("prescriptions")}
+              className={activeTab === "prescriptions" ? "bg-sky-500 hover:bg-sky-600" : ""}
+            >
+              Prescriptions
             </Button>
             <Button
               variant={activeTab === "notes" ? "default" : "outline"}
@@ -669,6 +820,89 @@ export default function PatientDetailPage({ params }) {
             </div>
           )}
 
+          {activeTab === "prescriptions" && (
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg">Prescriptions ({prescriptions.length})</h3>
+                <Button onClick={() => setShowPrescriptionModal(true)} className="bg-sky-500 hover:bg-sky-600">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Prescription
+                </Button>
+              </div>
+
+              {prescriptions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <FileText className="w-16 h-16 mb-3" />
+                  <p className="font-medium">No Prescriptions</p>
+                  <p className="text-sm mt-2">No prescriptions have been added for this patient</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {prescriptions.map((prescription) => (
+                    <Card key={prescription.id} className="p-4 border-2">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="font-semibold text-lg">Rx #{prescription.id}</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(prescription.date).toLocaleDateString()} • Dr. {prescription.doctor_name}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handlePrintPrescription(prescription)}
+                            className="bg-green-500 hover:bg-green-600 text-white"
+                          >
+                            <Printer className="w-4 h-4 mr-1" />
+                            Print
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleDeletePrescription(prescription.id)}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {prescription.diagnosis && (
+                        <div className="mb-3">
+                          <p className="text-sm font-semibold text-gray-700">Diagnosis:</p>
+                          <p className="text-sm text-gray-600">{prescription.diagnosis}</p>
+                        </div>
+                      )}
+
+                      <div className="mb-2">
+                        <p className="text-sm font-semibold text-gray-700 mb-2">Medications:</p>
+                        <div className="space-y-2">
+                          {prescription.medications.map((med, index) => (
+                            <div key={index} className="pl-4 border-l-2 border-sky-500">
+                              <p className="font-medium">
+                                {index + 1}. {med.name} - {med.dosage}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {med.frequency} for {med.duration}
+                              </p>
+                              {med.instructions && <p className="text-xs text-gray-500 italic">{med.instructions}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {prescription.notes && (
+                        <div className="mt-3 pt-3 border-t">
+                          <p className="text-sm font-semibold text-gray-700">Notes:</p>
+                          <p className="text-sm text-gray-600 italic">{prescription.notes}</p>
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === "notes" && (
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -799,6 +1033,144 @@ export default function PatientDetailPage({ params }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showPrescriptionModal} onOpenChange={setShowPrescriptionModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Prescription</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Doctor Name *</label>
+                <Input
+                  value={newPrescription.doctorName}
+                  onChange={(e) => setNewPrescription({ ...newPrescription, doctorName: e.target.value })}
+                  placeholder="Enter doctor name"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Date</label>
+                <Input
+                  type="date"
+                  value={newPrescription.date}
+                  onChange={(e) => setNewPrescription({ ...newPrescription, date: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Diagnosis</label>
+              <Input
+                value={newPrescription.diagnosis}
+                onChange={(e) => setNewPrescription({ ...newPrescription, diagnosis: e.target.value })}
+                placeholder="Enter diagnosis"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium">Medications *</label>
+                <Button onClick={handleAddMedication} size="sm" variant="outline">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Medication
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {newPrescription.medications.map((med, index) => (
+                  <Card key={index} className="p-4 bg-gray-50">
+                    <div className="flex justify-between items-start mb-3">
+                      <p className="font-semibold">Medication {index + 1}</p>
+                      {newPrescription.medications.length > 1 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveMedication(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium">Medicine Name *</label>
+                        <Input
+                          value={med.name}
+                          onChange={(e) => handleMedicationChange(index, "name", e.target.value)}
+                          placeholder="e.g., Amoxicillin"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium">Dosage *</label>
+                        <Input
+                          value={med.dosage}
+                          onChange={(e) => handleMedicationChange(index, "dosage", e.target.value)}
+                          placeholder="e.g., 500mg"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium">Frequency</label>
+                        <Input
+                          value={med.frequency}
+                          onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                          placeholder="e.g., 3 times daily"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium">Duration</label>
+                        <Input
+                          value={med.duration}
+                          onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                          placeholder="e.g., 7 days"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs font-medium">Instructions</label>
+                        <Input
+                          value={med.instructions}
+                          onChange={(e) => handleMedicationChange(index, "instructions", e.target.value)}
+                          placeholder="e.g., Take after meals"
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Additional Notes</label>
+              <Textarea
+                value={newPrescription.notes}
+                onChange={(e) => setNewPrescription({ ...newPrescription, notes: e.target.value })}
+                placeholder="Enter additional notes or instructions"
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setShowPrescriptionModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddPrescription} className="bg-sky-500 hover:bg-sky-600">
+                Save Prescription
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {printPrescription && (
+        <PrescriptionPrint
+          prescription={printPrescription}
+          patient={patient}
+          onClose={() => setPrintPrescription(null)}
+        />
+      )}
     </div>
   )
 }
