@@ -28,6 +28,9 @@ export default function PatientFormPage() {
     gender: "MALE",
     emergencyContactName: "",
     emergencyContactNumber: "",
+    paymentMethod: "",
+    paymentNumber: "",
+    paymentNumberName: "",
   })
 
   useEffect(() => {
@@ -133,14 +136,56 @@ export default function PatientFormPage() {
     setLoading(true)
 
     try {
+      const patientData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        address: formData.address,
+        dob: formData.dateOfBirth, // Convert dateOfBirth to dob for database
+        bloodType: formData.bloodType,
+        contactNumber: formData.contactNumber,
+        gender: formData.gender,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactNumber: formData.emergencyContactNumber,
+        paymentMethod: formData.paymentMethod,
+        paymentNumber: formData.paymentNumber,
+        paymentNumberName: formData.paymentNumberName,
+      }
+
+      console.log("[v0] Creating patient record:", patientData)
+
+      const patientResponse = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patientData),
+      })
+
+      if (!patientResponse.ok) {
+        console.error("[v0] Failed to create patient:", patientResponse.status)
+        alert("Failed to create patient record. Please try again.")
+        setLoading(false)
+        return
+      }
+
+      const newPatient = await patientResponse.json()
+      console.log("[v0] Patient created successfully:", newPatient)
+
       const appointmentData = {
-        ...formData,
+        fullName: formData.fullName,
+        email: formData.email,
+        contactNumber: formData.contactNumber,
+        dateOfBirth: formData.dateOfBirth,
+        bloodType: formData.bloodType,
+        gender: formData.gender,
+        address: formData.address,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactNumber: formData.emergencyContactNumber,
         appointmentDate: selectedDate,
         appointmentTime: selectedTime,
         doctorName: doctors.find((d) => d.id.toString() === selectedDoctor)?.full_name || "Dr. Smith",
+        patientId: newPatient.patient?.id || newPatient.id, // Link to patient record
       }
 
-      console.log("[v0] Submitting appointment:", appointmentData)
+      console.log("[v0] Creating appointment:", appointmentData)
 
       const response = await fetch("/api/appointments", {
         method: "POST",
@@ -414,6 +459,55 @@ export default function PatientFormPage() {
                     type="tel"
                     value={formData.emergencyContactNumber}
                     onChange={handleChange}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Payment Information</h2>
+              <p className="text-gray-600 text-sm mb-4">Please provide your preferred payment method for automatic billing</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="paymentMethod">Payment Method</Label>
+                  <select
+                    id="paymentMethod"
+                    name="paymentMethod"
+                    value={formData.paymentMethod}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  >
+                    <option value="">Select payment method</option>
+                    <option value="GCash">GCash</option>
+                    <option value="Maya">Maya</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Credit Card">Credit Card</option>
+                    <option value="Cash">Cash</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="paymentNumber">Payment Number/Account</Label>
+                  <Input
+                    id="paymentNumber"
+                    name="paymentNumber"
+                    value={formData.paymentNumber}
+                    onChange={handleChange}
+                    placeholder="e.g., 09123456789 or Account Number"
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="paymentNumberName">Account Holder Name</Label>
+                  <Input
+                    id="paymentNumberName"
+                    name="paymentNumberName"
+                    value={formData.paymentNumberName}
+                    onChange={handleChange}
+                    placeholder="Name on the payment account"
                     required
                     className="mt-1"
                   />

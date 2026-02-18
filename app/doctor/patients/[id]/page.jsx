@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { FileText, TestTube, X, ArrowLeft, Printer, Plus } from "lucide-react"
 import { PrescriptionPrint } from "@/components/prescription-print"
+import { DoctorNotesDrafting } from "@/components/doctor-notes-drafting"
 
 export default function PatientDetailPage({ params }) {
   const { id } = use(params)
@@ -904,35 +905,7 @@ export default function PatientDetailPage({ params }) {
           )}
 
           {activeTab === "notes" && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-semibold text-lg">Notes</h3>
-                <Button onClick={() => setShowNotesModal(true)} className="bg-sky-500 hover:bg-sky-600">
-                  + Add Note
-                </Button>
-              </div>
-
-              {notes.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <p className="font-medium">No notes available</p>
-                  <p className="text-sm mt-2">Record a new note for the patient</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {notes.map((note) => (
-                    <Card key={note.id} className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-xs text-gray-500">{note.createdAt}</p>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteNote(note.id)}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
+            <DoctorNotesDrafting patientId={id} doctorId={null} />
           )}
         </Card>
       </div>
@@ -1008,31 +981,7 @@ export default function PatientDetailPage({ params }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Notes</DialogTitle>
-            <p className="text-sm text-gray-600">Record a new notes for the patient</p>
-          </DialogHeader>
-          <div className="mt-4">
-            <Textarea
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Enter your notes here..."
-              rows={8}
-              className="w-full"
-            />
-          </div>
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" onClick={() => setShowNotesModal(false)}>
-              Close
-            </Button>
-            <Button onClick={handleAddNote} className="bg-sky-500 hover:bg-sky-600">
-              Add Entry
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      
 
       <Dialog open={showPrescriptionModal} onOpenChange={setShowPrescriptionModal}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

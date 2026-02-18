@@ -20,13 +20,13 @@ export async function GET(request) {
          WHERE full_name ILIKE $1 OR contact_number LIKE $2
          ORDER BY created_at DESC
          LIMIT $3 OFFSET $4`,
-        [`%${search}%`, `%${search}%`, limit, offset]
+        [`%${search}%`, `%${search}%`, limit, offset],
       );
 
       totalResult = await query(
         `SELECT COUNT(*) as count FROM patients 
          WHERE full_name ILIKE $1 OR contact_number LIKE $2`,
-        [`%${search}%`, `%${search}%`]
+        [`%${search}%`, `%${search}%`],
       );
     } else {
       // Get all patients
@@ -34,7 +34,7 @@ export async function GET(request) {
         `SELECT * FROM patients 
          ORDER BY created_at DESC
          LIMIT $1 OFFSET $2`,
-        [limit, offset]
+        [limit, offset],
       );
 
       totalResult = await query(`SELECT COUNT(*) as count FROM patients`);
@@ -53,7 +53,7 @@ export async function GET(request) {
     console.error("[v0] Error fetching patients:", error);
     return NextResponse.json(
       { error: "Failed to fetch patients" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -69,21 +69,25 @@ export async function POST(request) {
     console.log("[v0] Attempting database insert...");
     const result = await query(
       `INSERT INTO patients (
-        full_name, email, address, date_of_birth, blood_type, 
-        contact_number, gender, emergency_contact_name, emergency_contact_number
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        full_name, email, address, dob, blood_type, 
+        contact_number, gender, emergency_contact_name, emergency_contact_number,
+        payment_method, payment_number, payment_number_name
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *`,
       [
         data.fullName,
         data.email,
         data.address,
-        data.dateOfBirth || data.dob, // Support both field names for compatibility
+        data.dob,
         data.bloodType,
         data.contactNumber,
         data.gender,
         data.emergencyContactName,
         data.emergencyContactNumber,
-      ]
+        data.paymentMethod,
+        data.paymentNumber,
+        data.paymentNumberName,
+      ],
     );
 
     console.log("[v0] Patient created successfully:", result.rows[0]);
@@ -97,7 +101,7 @@ export async function POST(request) {
         error: "Failed to create patient",
         details: error.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

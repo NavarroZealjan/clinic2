@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, Calendar, FileText, BarChart3, CreditCard, ChevronDown, ChevronRight, LogOut, Users } from "lucide-react"
+import { Home, Calendar, FileText, BarChart3, CreditCard, ChevronDown, ChevronRight, LogOut, Users, MessageCircle } from "lucide-react"
 
 export default function StaffSidebar() {
   const pathname = usePathname()
@@ -120,6 +120,18 @@ export default function StaffSidebar() {
         >
           <CreditCard className="w-5 h-5" />
           <span>Billing</span>
+        </Link>
+
+        <Link
+          href="/staff/announcements"
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-colors ${
+            isActive("/staff/announcements")
+              ? "bg-[#2a3952] text-white"
+              : "text-gray-300 hover:bg-[#2a3952] hover:text-white"
+          }`}
+        >
+          <MessageCircle className="w-5 h-5" />
+          <span>Announcements</span>
         </Link>
       </nav>
 

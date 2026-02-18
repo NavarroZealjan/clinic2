@@ -105,7 +105,10 @@ export default function BillingPage() {
         body: JSON.stringify({
           amount,
           paymentMethod: selectedPaymentMethod.name,
-          patientName: selectedPatient.full_name, // Use selected patient's name
+          patientName: selectedPatient.full_name,
+          patientId: selectedPatient.id,
+          // Use patient's saved payment number if available
+          paymentNumber: selectedPatient?.payment_number || null,
           gcashNumber: null,
         }),
       })
@@ -123,7 +126,13 @@ export default function BillingPage() {
 
   const handleConfirmPayment = () => {
     if (selectedMethod === "gcash") {
-      setShowGcashModal(true)
+      // Check if patient has saved GCash number
+      if (selectedPatient?.payment_number && selectedPatient?.payment_method === "GCash") {
+        setGcashNumber(selectedPatient.payment_number)
+        setStep("gcash-pending")
+      } else {
+        setShowGcashModal(true)
+      }
     } else {
       processPayment()
     }
@@ -156,13 +165,17 @@ export default function BillingPage() {
     setStep("processing")
 
     try {
+      // Use patient's payment number if available, otherwise use manually entered one
+      const finalPaymentNumber = selectedPatient?.payment_number || gcashNumber
+      
       const response = await fetch("/api/billing/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           billingId,
           paymentMethod: selectedPaymentMethod.name,
-          gcashNumber: selectedMethod === "gcash" ? gcashNumber : null,
+          gcashNumber: selectedMethod === "gcash" ? finalPaymentNumber : null,
+          paymentNumber: finalPaymentNumber,
         }),
       })
 
