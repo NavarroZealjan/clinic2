@@ -10,10 +10,14 @@ export async function PUT(request, { params }) {
 
     const result = await query(
       `UPDATE clinic_announcements 
-       SET title = $1, message = $2, category = $3, expires_at = $4, updated_at = CURRENT_TIMESTAMP
+       SET title = COALESCE($1, title),
+           message = COALESCE($2, message),
+           category = COALESCE($3, category),
+           expires_at = COALESCE($4, expires_at),
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $5
        RETURNING *`,
-      [title, message, category || "General", expiresAt || null, id],
+      [title || null, message || null, category || null, expiresAt || null, id],
     );
 
     if (result.rows.length === 0) {
@@ -33,14 +37,24 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE - Delete announcement
+// DELETE - Remove announcement
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
 
-    await query("DELETE FROM clinic_announcements WHERE id = $1", [id]);
+    const result = await query(
+      "DELETE FROM clinic_announcements WHERE id = $1 RETURNING id",
+      [id],
+    );
 
-    return NextResponse.json({ message: "Announcement deleted" });
+    if (result.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Announcement not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ success: true, id: result.rows[0].id });
   } catch (error) {
     console.error("Error deleting announcement:", error);
     return NextResponse.json(

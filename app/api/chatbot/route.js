@@ -19,7 +19,7 @@ export async function POST(request) {
     const announcementResult = await query(
       `SELECT id, title, message as answer, category FROM clinic_announcements 
        WHERE is_active = true 
-       AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+       AND (expires_at IS NULL OR DATE(expires_at) >= DATE(CURRENT_TIMESTAMP))
        ORDER BY created_at DESC LIMIT 5`,
     );
 
@@ -32,38 +32,84 @@ export async function POST(request) {
     let botResponse;
     let matchedItemId = null;
 
-    // If there are active announcements, check if user is asking about general info
-    if (
-      announcements.length > 0 &&
-      (userMessage.includes("what") ||
-        userMessage.includes("how") ||
-        userMessage.includes("when") ||
-        userMessage.includes("today"))
-    ) {
-      // Show first active announcement
-      botResponse = announcements[0].answer;
-      matchedItemId = announcements[0].id;
-      console.log("[v0] Showing announcement:", announcements[0].title);
-    } else {
-      // Function to calculate string similarity
-      const calculateSimilarity = (str1, str2) => {
-        if (str1.length === 0 || str2.length === 0) return 0;
-        const userWords = str1.split(/\s+/);
-        const targetWords = str2.split(/\s+/);
-        let matchedWords = 0;
-        userWords.forEach((word) => {
-          if (
-            word.length > 2 &&
-            targetWords.some(
-              (target) => target.includes(word) || word.includes(target),
-            )
-          ) {
-            matchedWords++;
-          }
-        });
-        return matchedWords / Math.max(userWords.length, targetWords.length);
-      };
+    // Function to calculate string similarity
+    const calculateSimilarity = (str1, str2) => {
+      if (str1.length === 0 || str2.length === 0) return 0;
+      const userWords = str1.split(/\s+/);
+      const targetWords = str2.split(/\s+/);
+      let matchedWords = 0;
+      userWords.forEach((word) => {
+        if (
+          word.length > 2 &&
+          targetWords.some(
+            (target) => target.includes(word) || word.includes(target),
+          )
+        ) {
+          matchedWords++;
+        }
+      });
+      return matchedWords / Math.max(userWords.length, targetWords.length);
+    };
 
+    // FIRST: Check if user message matches any active announcement
+    if (announcements.length > 0) {
+      for (let ann of announcements) {
+        const titleMatch = calculateSimilarity(
+          userMessage,
+          ann.title.toLowerCase(),
+        );
+        const contentMatch = calculateSimilarity(
+          userMessage,
+          ann.answer.toLowerCase(),
+        );
+        const maxMatch = Math.max(titleMatch, contentMatch);
+
+        if (maxMatch > 0.3) {
+          // 30% similarity threshold
+          botResponse = ann.answer;
+          matchedItemId = ann.id;
+          console.log(
+            "[v0] Showing announcement:",
+            ann.title,
+            "Score:",
+            maxMatch,
+          );
+          break;
+        }
+      }
+    }
+
+    // SECOND: If no announcement matched, show default clinic hours if asking about them
+    if (
+      !botResponse &&
+      (userMessage.includes("hour") ||
+        userMessage.includes("when") ||
+        userMessage.includes("open") ||
+        userMessage.includes("close"))
+    ) {
+      // No active announcement, show default clinic hours
+      try {
+        const settingsResult = await query(
+          `SELECT setting_value FROM clinic_settings 
+           WHERE setting_key IN ('clinic_hours_open', 'clinic_hours_close')
+           ORDER BY setting_key`,
+        );
+
+        if (settingsResult.rows.length === 2) {
+          const hours = settingsResult.rows.map((r) => r.setting_value);
+          botResponse = `Our clinic hours are ${hours[0]} to ${hours[1]}, Monday to Friday.`;
+          console.log("[v0] Showing default clinic hours");
+        } else {
+          throw new Error("Hours not found");
+        }
+      } catch (e) {
+        botResponse =
+          "Our clinic is open from 8:00 AM to 5:00 PM, Monday to Friday.";
+      }
+    }
+
+    // THIRD: If still no match, try FAQ database
+    if (!botResponse) {
       // Fetch all FAQs from database (keeping old FAQ system if it exists)
       let faqs = [];
       try {
